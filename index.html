@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NATTA Member Manager</title>
+<style>
+  :root{--bg:#0f172a;--card:#1e293b;--text:#f8fafc;--muted:#94a3b8;--accent:#38bdf8;--yubika:#ec4899;--bharat:#f59e0b;--jiswan:#8b5cf6;--confused:#64748b;--details:#10b981;--danger:#ef4444}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text)}
+  .container{max-width:1200px;margin:0 auto;padding:20px}
+  h1{margin:0 0 10px;font-size:1.6rem}
+  .subtitle{color:var(--muted);margin-bottom:20px;font-size:.9rem}
+  .tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;border-bottom:1px solid #334155;padding-bottom:10px}
+  .tab{padding:10px 18px;border-radius:8px;cursor:pointer;background:var(--card);border:1px solid #334155;font-size:.85rem;font-weight:600;transition:.2s}
+  .tab:hover{border-color:var(--accent)}
+  .tab.active{background:var(--accent);color:#0f172a;border-color:var(--accent)}
+  .panel{display:none}
+  .panel.active{display:block;animation:fadeIn .3s}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+  .search-box{width:100%;padding:14px 18px;border-radius:10px;border:1px solid #334155;background:var(--card);color:var(--text);font-size:1rem;margin-bottom:16px;outline:none}
+  .search-box:focus{border-color:var(--accent)}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}
+  .member-card{background:var(--card);border:1px solid #334155;border-radius:12px;padding:16px;position:relative;transition:.2s}
+  .member-card:hover{border-color:#475569;transform:translateY(-2px)}
+  .member-card .num{position:absolute;top:10px;right:14px;color:var(--muted);font-size:.75rem}
+  .member-card .name{font-weight:700;font-size:1.05rem;margin-bottom:4px}
+  .member-card .company{color:var(--muted);font-size:.85rem;margin-bottom:8px;line-height:1.3}
+  .member-card .meta{display:flex;gap:12px;font-size:.8rem;color:var(--muted);flex-wrap:wrap}
+  .badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:.7rem;font-weight:700;text-transform:uppercase;margin-top:10px}
+  .badge-yubika{background:rgba(236,72,153,.15);color:var(--yubika);border:1px solid rgba(236,72,153,.3)}
+  .badge-bharat{background:rgba(245,158,11,.15);color:var(--bharat);border:1px solid rgba(245,158,11,.3)}
+  .badge-jiswan{background:rgba(139,92,246,.15);color:var(--jiswan);border:1px solid rgba(139,92,246,.3)}
+  .badge-confused{background:rgba(100,116,139,.15);color:var(--confused);border:1px solid rgba(100,116,139,.3)}
+  .badge-details{background:rgba(16,185,129,.15);color:var(--details);border:1px solid rgba(16,185,129,.3)}
+  .actions{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+  .btn{padding:6px 12px;border-radius:6px;border:none;cursor:pointer;font-size:.78rem;font-weight:600;text-decoration:none;display:inline-flex;align-items:center;gap:4px}
+  .btn-sm{padding:4px 10px;font-size:.75rem}
+  .btn-primary{background:var(--accent);color:#0f172a}
+  .btn-yubika{background:var(--yubika);color:#fff}
+  .btn-bharat{background:var(--bharat);color:#000}
+  .btn-jiswan{background:var(--jiswan);color:#fff}
+  .btn-confused{background:var(--confused);color:#fff}
+  .btn-details{background:var(--details);color:#fff}
+  .btn-outline{background:transparent;border:1px solid #475569;color:var(--text)}
+  .btn-danger{background:var(--danger);color:#fff}
+  .team-section{margin-bottom:24px}
+  .team-header{display:flex;align-items:center;gap:10px;margin-bottom:12px;font-size:1.1rem;font-weight:700}
+  .team-count{background:var(--card);padding:2px 10px;border-radius:12px;font-size:.8rem;color:var(--muted);border:1px solid #334155}
+  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center;z-index:1000;padding:20px}
+  .modal-overlay.active{display:flex}
+  .modal{background:var(--card);border:1px solid #334155;border-radius:16px;width:100%;max-width:500px;max-height:90vh;overflow-y:auto;padding:24px}
+  .modal h3{margin-top:0}
+  .form-group{margin-bottom:14px}
+  .form-group label{display:block;font-size:.85rem;color:var(--muted);margin-bottom:6px}
+  .form-group input,.form-group textarea,.form-group select{width:100%;padding:10px 14px;border-radius:8px;border:1px solid #334155;background:#0f172a;color:var(--text);font-size:.9rem}
+  .form-group textarea{min-height:80px;resize:vertical}
+  .empty-state{text-align:center;padding:40px;color:var(--muted)}
+  .stats{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:20px}
+  .stat-card{background:var(--card);border:1px solid #334155;border-radius:10px;padding:14px 18px;min-width:140px;flex:1}
+  .stat-card .val{font-size:1.4rem;font-weight:700;color:var(--accent)}
+  .stat-card .lbl{font-size:.8rem;color:var(--muted)}
+  .list-row{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:var(--card);border:1px solid #334155;border-radius:10px;margin-bottom:10px}
+  .list-row .left{display:flex;align-items:center;gap:12px}
+  .list-row .list-name{font-weight:600}
+  .list-row .list-count{font-size:.8rem;color:var(--muted)}
+  .print-area{background:#fff;color:#000;padding:40px;display:none}
+  .print-area.active{display:block}
+  @media print{body *{visibility:hidden}.print-area,.print-area *{visibility:visible}.print-area{position:absolute;left:0;top:0;width:100%}}
+  .toast{position:fixed;bottom:20px;right:20px;background:var(--card);border:1px solid var(--accent);color:var(--text);padding:12px 18px;border-radius:10px;font-size:.85rem;transform:translateX(150%);transition:.3s;z-index:200}
+  .toast.show{transform:translateX(0)}
+  @media(max-width:640px){.grid{grid-template-columns:1fr}h1{font-size:1.3rem}}
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>🇳🇵 NATTA Member Command Center</h1>
+  <div class="subtitle">522 members • Local storage • Offline • URL shareable</div>
+  <div class="stats" id="statsBar">
+    <div class="stat-card"><div class="val" id="totalMembers">0</div><div class="lbl">Total Members</div></div>
+    <div class="stat-card"><div class="val" id="yubikaCount">0</div><div class="lbl">Yubika Team</div></div>
+    <div class="stat-card"><div class="val" id="bharatCount">0</div><div class="lbl">Bharat Team</div></div>
+    <div class="stat-card"><div class="val" id="jiswanCount">0</div><div class="lbl">Jiswan Team</div></div>
+    <div class="stat-card"><div class="val" id="confusedCount">0</div><div class="lbl">Confused</div></div>
+    <div class="stat-card"><div class="val" id="customCount">0</div><div class="lbl">Custom Lists</div></div>
+  </div>
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('all')">📋 All Members</div>
+    <div class="tab" onclick="switchTab('search')">🔍 Lookup</div>
+    <div class="tab" onclick="switchTab('teams')">🎯 Teams</div>
+    <div class="tab" onclick="switchTab('lists')">📁 My Lists</div>
+    <div class="tab" onclick="switchTab('export')">⬇️ Export</div>
+  </div>
+  <div class="panel active" id="panel-all">
+    <input type="text" class="search-box" id="globalSearch" placeholder="Search by name, company, phone, or location..." oninput="renderAll()">
+    <div class="grid" id="allMembersGrid"></div>
+  </div>
+  <div class="panel" id="panel-search">
+    <input type="text" class="search-box" id="lookupInput" placeholder="Type a name to check NATTA membership..." oninput="renderLookup()">
+    <div id="lookupResults"></div>
+  </div>
+  <div class="panel" id="panel-teams"><div id="teamsContainer"></div></div>
+  <div class="panel" id="panel-lists">
+    <div style="display:flex;gap:10px;margin-bottom:16px;">
+      <input type="text" class="search-box" id="newListName" placeholder="New list name..." style="margin-bottom:0;">
+      <button class="btn btn-primary" onclick="createList()">Create List</button>
+    </div>
+    <div id="listsContainer"></div>
+  </div>
+  <div class="panel" id="panel-export">
+    <div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(220px,1fr))">
+      <div class="stat-card" style="cursor:pointer" onclick="downloadJSON()"><div class="val">💾</div><div class="lbl">Download JSON Backup</div></div>
+      <div class="stat-card" style="cursor:pointer" onclick="printTeams()"><div class="val">🖨️</div><div class="lbl">Print / Save PDF</div></div>
+      <div class="stat-card" style="cursor:pointer" onclick="downloadMembersCSV()"><div class="val">📄</div><div class="lbl">Download All CSV</div></div>
+      <div class="stat-card" style="cursor:pointer" onclick="shareURL()"><div class="val">🔗</div><div class="lbl">Copy Shareable Link</div></div>
+    </div>
+    <div style="margin-top:20px;color:var(--muted);font-size:.85rem">
+      <strong>How to share:</strong> Save this file, then upload to <strong>GitHub Pages</strong>, <strong>Netlify Drop</strong>, or <strong>Cloudflare Pages</strong> for a free public URL. Anyone with the link can use it.
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="detailsModal">
+  <div class="modal">
+    <h3>📝 Member Details</h3>
+    <div class="form-group"><label>Name</label><input type="text" id="modalName" readonly></div>
+    <div class="form-group"><label>Company</label><input type="text" id="modalCompany" readonly></div>
+    <div class="form-group"><label>Phone</label><input type="text" id="modalPhone" readonly></div>
+    <div class="form-group"><label>Notes</label><textarea id="modalNotes" placeholder="Add meeting notes..."></textarea></div>
+    <div class="form-group"><label>Assign Team</label><select id="modalTeam"><option value="">No Team</option><option value="yubika">Yubika Team</option><option value="bharat">Bharat Team</option><option value="jiswan">Jiswan Team</option><option value="confused">Confused Team</option><option value="details">Add Details Only</option></select></div>
+    <div style="display:flex;gap:10px;justify-content:flex-end"><button class="btn btn-outline" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveDetails()">Save</button></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="listModal">
+  <div class="modal">
+    <h3 id="listModalTitle">📁 List</h3>
+    <input type="text" class="search-box" id="listMemberSearch" placeholder="Search members to add..." oninput="renderListModalSearch()">
+    <div id="listModalResults" style="max-height:300px;overflow-y:auto"></div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:14px"><button class="btn btn-outline" onclick="closeListModal()">Close</button></div>
+  </div>
+</div>
+
+<div class="print-area" id="printArea"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+const MEMBERS = [{"number":1,"company":"8 Eyes Travel and Tours Pvt. Ltd.","name":"Mr. Nabin Gurung","phone":"9851020170","location":"Thamel"},{"number":2,"company":"A.N.T. Holidays Pvt. Ltd","name":"Ms. Shradha Joshi","phone":"9841234869","location":"teku"},{"number":3,"company":"Aadiyogi Express Travels Services Pvt. Ltd","name":"Mr. Chirangibi Khanal","phone":"9801237799","location":"Pashupati Road"},{"number":4,"company":"Aakash Travels & Tours Pvt. Ltd","name":"Mr. Ram Sharan Thapaliya","phone":"9851020780","location":"Thamel"},{"number":5,"company":"Aarya Village Travel Pvt. Ltd.","name":"Ms. Sarala Sapkota","phone":"9851117122","location":"Lazimpat"},{"number":6,"company":"Abha Travels & Tours Pvt. Ltd","name":"Mr. Yagya Murti Acharya","phone":"9851014673","location":"Tripureswore"},{"number":7,"company":"Abhiwandan Expedition Holidays P. Ltd.","name":"Mr. Umesh Gupta","phone":"9851181005","location":"Kaldhara"},{"number":8,"company":"Able Nepal Travel & Tours Pvt. Ltd","name":"Mr. Damodar Dhakal","phone":"9851019102","location":"Lazimpat"},{"number":9,"company":"Accor Holidays Pvt. Ltd","name":"Mr. Alok Thapaliya/Shreehari Thapaliya","phone":"9851075681","location":"Thamel"},{"number":10,"company":"Ace Express Service","name":"Mr. Arjun Prasad Dharel","phone":"9851033663","location":"Lainchour"},{"number":11,"company":"ACE Holidays Travel and Adventure Pvt.Ltd","name":"Mr. Prem Kumar Khatri","phone":"9802002225","location":"Thamel"},{"number":12,"company":"Ace the Himalayas Tours and Travels Pvt.Ltd","name":"Mr. Sujan Khatri","phone":"981-8597778","location":"Thamel"},{"number":13,"company":"Across World Travel Pvt. Ltd.","name":"Mr. Tejendra S Poudel","phone":"9801029723","location":"Thamel"},{"number":14,"company":"Adaan Travels and Expedition Pvt. Ltd.","name":"Mr. Binod Puri","phone":"9851260347","location":"chabahil"},{"number":15,"company":"Adventure Himalayan Travels & Treks Pvt. Ltd","name":"Mr. Rana Bahadur Khadka","phone":"9851037559","location":"thamel"},{"number":16,"company":"Adventure Orion Travel & Tours Pvt. Ltd.","name":"Mr. Kamal Singh Dhimal","phone":"9851111304","location":"new baneshwore"},{"number":17,"company":"Adventure Outdoor Excursion Pvt. Ltd","name":"Mrs. Pragya Sharma","phone":"9851134556","location":"gairidhara"},{"number":18,"company":"Adventure Snowman Tours & Travels Pvt. Ltd","name":"Mr. Kiran Shahi","phone":"9851051182","location":"gyaneshore"},{"number":19,"company":"Adventure World Trails","name":"Ms. Shreeti Rana","phone":"9808242040","location":"dhobichour"},{"number":20,"company":"Advernture Specialist Travel Pvt. Ltd","name":"Mr. Raj Kumar Shrestha","phone":"9851024546","location":"Bhaiseapati"},{"number":21,"company":"Aerolina Travels & Tours Pvt. Ltd","name":"Mr. Yam Bahadur Khadka","phone":"9851105056","location":"Hattisar"},{"number":22,"company":"Air Queen Travels & Tours Pvt. Ltd","name":"Ms. Parbati Chalise","phone":"9851062084","location":"Sukheadhara"},{"number":23,"company":"Airwings Tours & Travels Pvt. Ltd.","name":"Mr. Vikas Kandel","phone":"9851285004","location":"Ranibari marg"},{"number":24,"company":"Aishwarya Travels P.Ltd","name":"Mr. Bikas Niraula","phone":"9856032168","location":"pokhara/gairidhara"},{"number":25,"company":"Aktivferien Travels & Tours Pvt.Ltd","name":"Mr. Mingmar Sherpa","phone":"9841205294","location":"kapurdhara"},{"number":26,"company":"Alfresco Adventure Travel Pvt. Ltd.","name":"Mr. Gautam Raj Wagle","phone":"9851049483","location":"Thamel"},{"number":27,"company":"All Destination Holidays Pvt. Ltd","name":"Ms. Rama Kumari Pyakurel","phone":"9851155432","location":"thamel"},{"number":28,"company":"All Seasons Adventure Pvt. Ltd","name":"Mr. Suman Ghimire","phone":"9851050722","location":"thamel"},{"number":29,"company":"Alpine Explore Nepal Pvt. Ltd","name":"Mr. Bharat Regmi","phone":"9851023071","location":"thamel"},{"number":30,"company":"Alpine Kailash Pvt. Ltd.","name":"Mr. Pradip Pandit","phone":"9851070469","location":"Lazimpat"},{"number":31,"company":"Alpine Rescue Service Pvt. Ltd","name":"Mr. Prakash Chandra Lohani","phone":"9851068271","location":"khusibu"},{"number":32,"company":"Altai Nepal Trekking & Travel Pvt. Ltd","name":"Mr. Anurodh SJB Rana","phone":"9851051895","location":"chabahil"},{"number":33,"company":"Altruism Travels Pvt.Ltd","name":"Mr. Gopal Man Singh Rajbanshi","phone":"9801001555","location":"buddhanagar"},{"number":34,"company":"Ama Travel Pvt. Ltd","name":"Mr Sudhir Kumar Upadhyay","phone":"9851026681","location":"thamel"},{"number":35,"company":"Amazing Nepal Holidays Pvt. Ltd.","name":"Mr. Raju Kandel","phone":"9851074676","location":"Thamel"},{"number":36,"company":"Ample Travels Pvt. Ltd","name":"Mr. Lekha Nath Bhandari","phone":"9851023226","location":"nayabazar"},{"number":37,"company":"Amravati Travels Pvt Ltd","name":"Mr. Siddhartha SJB Rana","phone":"9851021751","location":"Gairidhara"},{"number":38,"company":"Amtrip","name":"Mr. Siddhartha SJB Rana","phone":"9851021751","location":"Gairidhara"},{"number":39,"company":"Annapurna Travel & Tours Pvt. Ltd","name":"Ms. Shova Ghimire","phone":"9851086556","location":"Durbarmarg"},{"number":40,"company":"APG Global Associates Nepal","name":"Mr. Arun Chandra Pokheral","phone":"9851020659","location":"Chandol"},{"number":41,"company":"Apoorva Tours and Travel Pvt. Ltd.","name":"Ms. Sharmila KV. Kafle","phone":"9851168573","location":"Thamel"},{"number":42,"company":"Appointment Travels & Tours Pvt. Ltd","name":"Mr. Narayan Neupane","phone":"9849523490","location":"thamel"},{"number":43,"company":"Arniko Int'l Travel","name":"Mr. Peter Ko","phone":"9851052540","location":"baluwatar"},{"number":44,"company":"Aroma Travels & Tours Pvt. Ltd","name":"Mr. Bishnu Karki","phone":"9851009200","location":"hattisar"},{"number":45,"company":"Arrow Travel & Tours Pvt. Ltd","name":"Mrs. Sabita Bhattarai K. C","phone":"9851017230","location":"ratopul"},{"number":46,"company":"Asia Adventure Excursion Pvt. Ltd.","name":"Mr. Sampurna Dev Thapa","phone":"9851044289","location":"Lazimpat"},{"number":47,"company":"Asian Adventure Travel & Tour Pvt. Ltd","name":"Mr. Ang Tshering Sherpa","phone":"9851029684","location":"Thamel"},{"number":48,"company":"Asian Heritage International Tours & Travels Pvt. ltd","name":"Mr. Nilhari Bastola","phone":"9851019279","location":"Thamel"},{"number":49,"company":"Atlas Travels & Tours Pvt. Ltd","name":"Mr. Santosh Kumar Lama/Phurba Lama","phone":"9851032122","location":"tinkune"},{"number":50,"company":"Attentive Holiday Tours & Travel Pvt. Ltd","name":"Mr. Ramesh Lamsal","phone":"9851070284","location":"thamel"},{"number":51,"company":"Avia Tours & Travels Pvt. Ltd","name":"Mr. Denis Shrestha","phone":"9846649368","location":"Thamel"},{"number":52,"company":"Axis Holidays Nepal Travel & Tours Pvt. Ltd","name":"Mr. Bijay Rai","phone":"9851057384","location":"jhamsikhel"},{"number":53,"company":"B.C.N Travels & Tours Pvt. Ltd","name":"Mr. Sanjit Shrestha","phone":"9851079114","location":"Lazimpat"},{"number":54,"company":"Baba Adventure Travel & Tours P. Ltd","name":"Mr. Pralad Lohani","phone":"9851093998","location":"nayabazar"},{"number":55,"company":"Basil Holidays Pvt. Ltd.","name":"Mr. Ramhari Poudyal","phone":"9851205010","location":"battishputali"},{"number":56,"company":"Batika Tours & Travel","name":"Mr. Raju Adhikari","phone":"9842628523","location":"Jhapa"},{"number":57,"company":"Best Way Travel & Tours Pvt.Ltd","name":"Mr.Uddav Prasad Dhungel","phone":"9851015905","location":"mid baneshwore"},{"number":58,"company":"Bestway to Nepal Pvt. Ltd.","name":"Mr. Surendra Guruwacharya","phone":"9851060933","location":"apsaramarg"},{"number":59,"company":"Bisesh Travel & Trek Pvt. Ltd.","name":"Ms. Usha Kandel","phone":"9851221186","location":"machhapokhari-16, Balaju"},{"number":60,"company":"Black Eye Journeys Pvt. Ltd","name":"Mr. Nabin Mukhiya","phone":"9861385666","location":"Thamel"},{"number":61,"company":"Bline Tours","name":"Mr. Binod Shrestha","phone":"9851020771","location":"baluwatar"},{"number":62,"company":"Bliss Tours & Travels Pvt. Ltd.","name":"Mr. Gautam Kumar Shrestha","phone":"9851059167","location":"Thamel"},{"number":63,"company":"Blue Himalaya Tours and Travels Pvt.Ltd","name":"Mr. Nakul Bhandari","phone":"9841438557","location":"sorakhutte"},{"number":64,"company":"Blue Line Tours & Travels","name":"Mr. Chhabi Lal Ghimire","phone":"9841487694","location":"sorakhutte"},{"number":65,"company":"Blue Mountain Travels & Tours Pvt. Ltd.","name":"Mr. Buddhi Bahadur Basnet","phone":"9851050313","location":"Kaldhara"},{"number":66,"company":"Blue one Travels P. Ltd.","name":"Mr. Madhav Aryal","phone":"9851084541","location":"sorakhutte"},{"number":67,"company":"Blue Sky Travels & Tours Pvt. Ltd","name":"Mr. Kedar Nath Sharma","phone":"9856020282","location":"kamalpokhari"},{"number":68,"company":"Bon Holidays","name":"Mr. Ramesh Poudel","phone":"9801003432","location":"hattisar"},{"number":69,"company":"Bon Travel & Tours Pvt. Ltd.","name":"Mr. Binod Raj Paudyal/Mr. Ramesh Paudel","phone":"9851033087","location":"thamel"},{"number":70,"company":"Bonjoy Travels","name":"Mr. Prem Prakash Khetan","phone":"9801003432","location":"kamalpokhari"},{"number":71,"company":"Brilliant Tours & Travels Pvt. Ltd","name":"Mr. Bishnu Dawadi","phone":"9841454382","location":"thirbamsadak"},{"number":72,"company":"Broadway Travels Pvt. Ltd","name":"Mr. Mahesh Pd Rai","phone":"9851020577","location":"Naxal"},{"number":73,"company":"Buddha Bless Travels, Tours & Trek Pvt. Ltd.","name":"Mr. Anup Raj Neupane","phone":"9851126448","location":"bhagawatimarg,nagpokhari"},{"number":74,"company":"Buddha Int'l Travel & Tours Pvt. Ltd","name":"Mr. Raghu Nath Neupane","phone":"9851100810","location":"thamel"},{"number":75,"company":"Buddha Land Tours & Travels P. Ltd.","name":"Ms. Suruchi Thapa Suyal","phone":"9860156046","location":"Nuwakotghar, sanepa"},{"number":76,"company":"Buddhist Circuits .com Pvt. Ltd.","name":"Mr. Bikram Pandey KAAJI","phone":"9851127777","location":"Newbaneshwore"},{"number":77,"company":"Bus Sewa Travels & Tours Pvt. Ltd.","name":"Mr. Pharsu Ram Khanal","phone":"9851017475","location":"sundhara"},{"number":78,"company":"C&K Nepal Travel & Tours Pvt. Ltd","name":"Mr. Shibesh Bahadur Shrestha","phone":"9851021483","location":"Baluwatar"},{"number":79,"company":"CG Travel Pvt. Ltd.","name":"Mr. Pradeep Shah","phone":"9801031115","location":"satghumtimarg"},{"number":80,"company":"Champawati International Travel Pvt.Ltd","name":"Mr. Som Nath Adhikari","phone":"9851057693","location":"Jyatha"},{"number":81,"company":"Champawati Tours & Travels Pvt. Ltd","name":"Ms. Rama Regmi","phone":"9851093896","location":"thamel"},{"number":82,"company":"Chandani Travels & Tours Pvt. Ltd","name":"Mr. Mahendra Kumar G. C","phone":"9851059231","location":"Putalisadak"},{"number":83,"company":"Cheerful Holiday Pvt. Ltd","name":"Mr. Narayan Pd. Gurung Koney","phone":"9851026326","location":"Maharajgunj"},{"number":84,"company":"Chimal Travel 7 Tours","name":"Mr. Deepak Gurung","phone":"9851161576","location":"Maharajgunj"},{"number":85,"company":"Chirayu International Tour and Travels Pvt.Ltd","name":"Mr. Amir Bagale","phone":"5917637","location":"Chamati"},{"number":86,"company":"Chitwan Safari Travel & Tours PVT. Ltd","name":"Mr. Bhisma P. Neupane","phone":"9851012711","location":"nagpokhari"},{"number":87,"company":"City Connect Travels & Tours Pvt. Ltd","name":"Ms. Swastika Pradhan","phone":"9851004420","location":"sanepachowk"},{"number":88,"company":"Classic Himlaya Travels & Tours Pvt.ltd","name":"Mr. Rabi Thapa","phone":"9851098887","location":"nagpokhari"},{"number":89,"company":"Classic Nepal Travel","name":"Mr. Bikram Pandey","phone":"9851127777","location":"babarmahal"},{"number":90,"company":"Columbus Travel & Tours Pvt. ltd","name":"Mr. Pramod Dahal","phone":"9851031854","location":"pinglasthan"},{"number":91,"company":"Confidence Travels Services Pvt. ltd","name":"Mr. Raja Shakya","phone":"9851047196","location":"kamalpokhari"},{"number":92,"company":"Connect Everest Travels & Tours Pvt. Ltd.","name":"Mr. Ershad Ahmed","phone":"9745668174","location":"tilganga"},{"number":93,"company":"Cosmo Nepal Travel & Tours Pvt. Ltd.","name":"Mr. Chutra Bdr. Khatri","phone":"9851108449","location":"Gairidhara"},{"number":94,"company":"Creative Travel Nepal Pvt. ltd","name":"Mr. Hemanta Kolachepati","phone":"9801023087","location":"basundhara"},{"number":95,"company":"Crystal Adventure Pvt.ltd","name":"Mr. Raju Manandhar","phone":"9851070617","location":"Kamalpokhari"},{"number":96,"company":"D.K Travel & Tours Pvt.ltd","name":"Unknown","phone":"","location":"Buspark"},{"number":97,"company":"Dalima Tours & Travel Pvt. ltd","name":"Mr. Dhruba Raj Neupane/Mr. Dendi Sherpa","phone":"9841223382","location":"Thamel"},{"number":98,"company":"Danfe Travel Centre Pvt. ltd","name":"Mr. Pavitra Kumar Karki","phone":"9851020234","location":"Kamalpokhari"},{"number":99,"company":"Debit Tours & Travels Pvt. Ltd.","name":"Mr. Dhak Nath Kafle","phone":"9851019859","location":"thamel"},{"number":100,"company":"Debonair Travel & Tours Pvt. ltd","name":"Ms. Phudoma Sherpa","phone":"9851002983","location":"Tangalmarg"},{"number":101,"company":"Deepjyoti Adventure Tours & Travel Pvt.ltd","name":"Mr. Tanka Bahadur Thapa","phone":"9851101812","location":"Gaushala"},{"number":102,"company":"Desh Durshan Bus Sewa Pvt. Ltd.","name":"Mr. Shreekanta Acharya","phone":"9851139903","location":"nayabazar"},{"number":103,"company":"Desire Nepal Treks Travels & Tours Pvt. Ltd.","name":"Mr. Balaram Khadka","phone":"9851108335","location":"sorakhutte"},{"number":104,"company":"Destingo Tours & Travels Pvt. Ltd.","name":"Mr. Himmat Puri","phone":"9855061433","location":"Chitwan"},{"number":105,"company":"Dharma Adventure","name":"Mr. Pawan Tuladhar","phone":"9801020267","location":"bishalnagar"},{"number":106,"company":"Diana Travels & Tours Pvt. Ltd","name":"Mrs. Dibya Prabha Shahi","phone":"9851057890","location":"Thamel"},{"number":107,"company":"Diligent Travels & Tours Pvt. Ltd.","name":"Mr. Santosh Tripathi","phone":"9802346484","location":"panipokhari"},{"number":108,"company":"Direct Nepal Travel","name":"Mr. Subarna Shrestha","phone":"9813200256","location":"hattisar"},{"number":109,"company":"Dokora Travels & Tours Pvt. Ltd","name":"Mr. Som Nath Adhikari","phone":"9841554551","location":"baluwatar"},{"number":110,"company":"Dragon Holidays P. ltd","name":"Mr. Raj Kumar Pathak","phone":"9841603398","location":"kamaladi"},{"number":111,"company":"Dream Himalayan Travel and Tours Pvt. Ltd.","name":"Mr. Ranjit Dahal","phone":"9802375999","location":"tokha"},{"number":112,"company":"Dream International Travels & Tours Pvt. Ltd.","name":"Ms. Bishnu Maya Shrestha","phone":"9843256238","location":"thamel"},{"number":113,"company":"Dream Kailash Travels & Tours Pvt. Ltd.","name":"Mr. Tej Bir Shrestha","phone":"9851095748","location":"Thamel"},{"number":114,"company":"Dream Nepal Pvt. Ltd.","name":"Mr. Pasangde Tamang","phone":"9851156314","location":"Lazimpat"},{"number":115,"company":"Dream Tibet Travel","name":"Mr. Ram C. Lamichhane","phone":"9851162422","location":"maitighar"},{"number":116,"company":"Dreams International Holiday Pvt. ltd","name":"Mr. Nabin Khanal","phone":"9851142683","location":"lainchour"},{"number":117,"company":"Duke Nepal Adventure Pvt. ltd","name":"Mr. Pradeep Acharya","phone":"9851213226","location":"baluwatar"},{"number":118,"company":"Durbar Travel & Tours Pvt. ltd","name":"Mr. Min P. Lamichhane","phone":"9851037206","location":"bhaktapur"},{"number":119,"company":"Dynamic Services Pvt. ltd","name":"Mr. Madhu Sudan Acharya","phone":"9851024500","location":"maitighar"},{"number":120,"company":"E -Tour Channel.Com Pvt. Ltd.","name":"Mr. Pragya Raj Sapkota","phone":"9851110929","location":"kamaladi"},{"number":121,"company":"E.H.T Travels Pvt. Ltd.","name":"Mr. Manohar SJB Rana","phone":"9801110331","location":"lainchour"},{"number":122,"company":"Earth Nepal Holidays Pvt. ltd","name":"Mr. Laxman Panthi","phone":"9851015553","location":"panipokhari"},{"number":123,"company":"Earthbound Holidays Pvt. Ltd.","name":"Mr. Kedar Gajurel","phone":"9851060432","location":"nagpokhari"},{"number":124,"company":"Easy Fly Nepal Pvt. Ltd.","name":"Mr. Norbu Tshering Sherpa","phone":"9801012507","location":"Lazimpat"},{"number":125,"company":"e-Booking Nepal Pvt. Ltd.","name":"Mr. Anil Nepal","phone":"9705411077","location":"thamel"},{"number":126,"company":"Ecological Tours & Travels Pvt. Ltd.","name":"Mr. Rakesh Dhamala","phone":"9851033447","location":"thamel"},{"number":127,"company":"Elmira International Travels & Tour Pvt. Ltd.","name":"Mr. Suman Karki","phone":"9851118257","location":"Naxal"},{"number":128,"company":"Empire Travels & Treks Pvt. Ltd","name":"Mr. Ranjan Khanal","phone":"9851032287","location":"Tangal"},{"number":129,"company":"Euro- Asia Travel","name":"Mr. Ramesh Prasad Luintel","phone":"9851023406","location":"tokha"},{"number":130,"company":"Everest Express Tours & Travels Pvt. lTD","name":"Mr. R. R. Pandey/ Ms. Chandra Lekha Pandey","phone":"9841233997","location":"Kamaladi"},{"number":131,"company":"Everest Experience & Assistance Pvt. Ltd","name":"Mr. Mukti Pandey","phone":"9851060902","location":"baluwatar"},{"number":132,"company":"Everest Express International Pvt. ltd","name":"Mr. Sudhir Pandey","phone":"9841233997","location":"Kamaladi"},{"number":133,"company":"Everest Miracle Travel & Tours Pvt. ltd","name":"Mr. Bharat Jung Pandey","phone":"9851098360","location":"baluwatar"},{"number":134,"company":"Everest Nepal Travel","name":"Ananda Neupane","phone":"9867627872","location":"Bagbazar"},{"number":135,"company":"Everest Travel Service Pvt. ltd","name":"Mr. Rabindra Man Singh Pradhan/Mr. Pranil Man Singh Pradhan","phone":"9851098360","location":"Kamaldi"},{"number":136,"company":"Everest Vacation Pvt. Ltd.","name":"Mr. Netra Bagale","phone":"9851053024","location":""},{"number":137,"company":"Evergreen Tours International Pvt. Ltd","name":"Mr. Chitra B. Gurung","phone":"9851038873","location":"hattisar"},{"number":138,"company":"Exoctic Adventure Tours & Travels Pvt. ltd","name":"Mr. Raghu Raj Rawal","phone":"9851038288","location":"kupondole"},{"number":139,"company":"Exotic Destination Nepal Tours & Treks Pvt. ltd","name":"Mr. Dinesh Pandey","phone":"9851041464","location":"Thamel"},{"number":140,"company":"Experience Nepal Tours & Travels Pvt. ltd","name":"Mr. Sonam Tapke Gurung","phone":"9851024857","location":"Thamel"},{"number":141,"company":"Expert Asian Tours & Travels Pvt. Ltd","name":"Mr. Sher Bahadur Pariyar","phone":"9851074484","location":"Thamel"},{"number":142,"company":"Faith Me Travel & Tours Pvt. ltd","name":"Mr. Man Bahadur Limbu","phone":"9851107145","location":"manbhawan"},{"number":143,"company":"Fast International Travels & Tours Pvt. ltd","name":"Mr. Dal Bdr. Limbu","phone":"9851021723","location":"kupondole"},{"number":144,"company":"Fast Track Travel & Tours Pvt. ltd","name":"Mr. Khum Raj Thapa","phone":"9851076399","location":"nagpokhari"},{"number":145,"company":"Feather Tours & Travel Pvt. ltd","name":"Mr. Nayan Man Shrestha","phone":"9801142424","location":"nagpokhari"},{"number":146,"company":"Ferien Travel Pvt. Ltd.","name":"Mr. Durga Prasad Gautam","phone":"9851036397","location":"Newbaneshwore"},{"number":147,"company":"Fewa Tours & Travels Pvt. ltd","name":"Mr. Ujjwal Aryal","phone":"9851020118","location":"bagdurbar"},{"number":148,"company":"Fishtail Holidays Pvt. Ltd.","name":"Mr. Rajesh Pahari","phone":"9856032300","location":"pokhara"},{"number":149,"company":"Fishtail Tours & Travels Pvt.ltd","name":"Mr. Narayan Pd. Pokhrel","phone":"9851020636","location":"baluwatar"},{"number":150,"company":"Flight Connection International Pvt. ltd","name":"Mr. Shyam Sundar Kadel","phone":"9851090757","location":"thamel"},{"number":151,"company":"Flight Gyani Pvt. Ltd.","name":"Mr. Madhav Kumar Kandel","phone":"9867836383","location":"Lazimpat"},{"number":152,"company":"Flight Tracket Travels & Tours","name":"Mr. Kumar Nepal","phone":"9841657458","location":"Thamel"},{"number":153,"company":"Fly East Nepal Travel & Tours Pvt. Ltd.","name":"Mr. Abhishesh Subedi","phone":"9803566118","location":"Thamel"},{"number":154,"company":"Fly Nepa Travels & Tours Pvt. Ltd.","name":"Mr. Binod Adhikari","phone":"9820109043","location":"hattisar"},{"number":155,"company":"Foot Mark Travel & Adventure","name":"Ms. Khina Maya Bista","phone":"9851080965","location":"thamel"},{"number":156,"company":"Four Season Travel & Tours Pvt. ltd","name":"Mr. Bachan Gyawali","phone":"9801020260","location":"patandhoka"},{"number":157,"company":"Friends Holidays Pvt. ltd","name":"Mr. Rajendra Prasad Sapkota","phone":"9851082937","location":"jyatha"},{"number":158,"company":"Frist Assistance Nepal Pvt. Ltd.","name":"Mr. Bhanu Dhakal","phone":"9851030051","location":"jyatha"},{"number":159,"company":"Gaikhura Travels and Tours Pvt. Ltd.","name":"Ms. Sonika Bhandari","phone":"9841262529","location":"baluwatar"},{"number":160,"company":"Gandaki Tours & Travels Pvt. ltd","name":"Mr. Ram Kaji Koney","phone":"9851024696","location":"thamel"},{"number":161,"company":"Geoland Travels & Tours Pvt.ltd","name":"Mrs. Sita Gaire","phone":"9851133449","location":"thamel"},{"number":162,"company":"Glacier Travels & Tours Pvt.ltd","name":"Mr. Suraj Kafle","phone":"9851097244","location":"jyatha thamel"},{"number":163,"company":"Global International Travel P.Ltd.","name":"Mr. Sandip Shrestha","phone":"9856035943","location":"pokhara"},{"number":164,"company":"Global Links Tours & Travel Pvt. ltd","name":"Mr. Rajendra Baral","phone":"9851195940","location":"thamel"},{"number":165,"company":"Global Vacation Travel & Tours Pvt. ltd","name":"Mr. Ishwar P. Upadhyaya","phone":"9851140147","location":"thamel"},{"number":166,"company":"Go Bus Tours","name":"Mr. Ramesh Khadka","phone":"9813884241","location":"mitranagar"},{"number":167,"company":"Go Nepal Travel,Tours & Trekking Pvt. Ltd.","name":"Mr. Sudarshan Pandey","phone":"9802027652","location":"jyatha"},{"number":168,"company":"Gochali Tours & Travels Pvt. ltd","name":"Mr. Bhagirath Sapkota","phone":"9851093413","location":"Lazimpat"},{"number":169,"company":"Going Nepal Pvt. ltd","name":"Mr. Liladhar Bhandari","phone":"9851032961","location":"lazimpat"},{"number":170,"company":"Golden Gate Holidays Travel & Tours Pvt. ltd","name":"Mr. Dinesh Basnet","phone":"9851020642","location":"Newbaneshwore"},{"number":171,"company":"Goldengate Travels & Tours Pvt. Ltd.","name":"Mr. Rajendra Prasad Tripathi","phone":"9851114537","location":""},{"number":172,"company":"Gorkha International Travels Pvt. ltd","name":"Mr. Sushil Pant","phone":"9851066916","location":"thamel"},{"number":173,"company":"Gorkha Travels Pvt. ltd","name":"Mr. Nasib Shrestha","phone":"9801098510","location":"hattisar"},{"number":174,"company":"Gorkha Vision Travels & Tours Pvt. ltd","name":"Mr. Kedar Dawadi","phone":"9851046169","location":"Thamel"},{"number":175,"company":"Graceful Adventure Travel Pvt. Ltd.","name":"Mr. Padam Lal Timsina","phone":"9851219412","location":"thamel"},{"number":176,"company":"Great Journey Travel & Tours Pvt. ltd","name":"Mr. Govinda Baruwal","phone":"9851070364","location":"ghantaghar"},{"number":177,"company":"Great Nepal Travels & Tours Pvt. ltd","name":"Mr. Damodar Ghimire","phone":"9851064446","location":"panipokhari"},{"number":178,"company":"Great Way International Travels & Tours","name":"Mr. Kiran Sapkota","phone":"9851047465","location":"Kamalpokhari"},{"number":179,"company":"Green Horizon Tours & Travels Pvt. Ltd.","name":"Mr. Govinda Dahal","phone":"9851034482","location":"Thamel"},{"number":180,"company":"Green Lion Education Travel Company","name":"Mr. Rajesh Shrestha","phone":"9851034651","location":"Tokha"},{"number":181,"company":"Greencity Holidays Travels","name":"Mr. Sange Sherpa","phone":"9818227344","location":"Gairidhara"},{"number":182,"company":"Greenline Holidays Pvt. Ltd.","name":"Mr. Bal Karishna Khadka","phone":"9851180178","location":"hattisar"},{"number":183,"company":"Gulf Travel & Tours Pvt. Ltd","name":"Mr. Uttar Man Lama","phone":"9841212666","location":"Kamalpokhari"},{"number":184,"company":"Guru Travels Limited","name":"Mr. Bigyan Raj Sharma","phone":"9851032058","location":"Durbarmarg"},{"number":185,"company":"Hamlet Tours & Travels Pvt. Ltd","name":"Mr. Jeevan Koirala","phone":"9851053812","location":"Thamel"},{"number":186,"company":"Hamro Holidays Pvt. Ltd","name":"Mr. Suman Lal Shrestha","phone":"9843099269","location":"Durbarmarg"},{"number":187,"company":"Hamro Trips Travel & Tours","name":"Ms. Sahana Singh","phone":"9867437815","location":"hattisar"},{"number":188,"company":"Haneul Tours & Travels Pvt. Ltd.","name":"Mr. Binod Chapagain","phone":"9749743913","location":"Baluwatar"},{"number":189,"company":"Hariyali Travels & Tours Pvt. Ltd.","name":"Mr. Ishwora Dhish Rajbhandari","phone":"9851098896","location":"chabahil"},{"number":190,"company":"Harmony Travels & Tours","name":"Ms. Aditi Agarwal","phone":"9826507886","location":"charkhal"},{"number":191,"company":"Harvest Moon Travels & Tours Pvt Ltd","name":"Ms. Sulekha Shrestha/ Mr. Ram Prasad Shrestha","phone":"9851025480","location":"Gairidhara"},{"number":192,"company":"Heritage Journey Nepal Travels Pvt. Ltd.","name":"Mr. Gautam Karki","phone":"9851120262","location":"Tokha"},{"number":193,"company":"Heritage Tours & Travels Pvt Ltd","name":"Mr. Narendra Bhatta","phone":"9851021456","location":"Sinamangal"},{"number":194,"company":"High Asia Tours Pvt Ltd","name":"Mr. Dev Raj Nepal","phone":"9851096523","location":"Kapurdhara"},{"number":195,"company":"High View Travels & Tours Pvt. Ltd.","name":"Mr. Kailash Khadka","phone":"9855015360","location":"Sinamangal"},{"number":196,"company":"Highpeak Adventure","name":"Mr Sudarshan Paudel","phone":"9851223950","location":"tokha"},{"number":197,"company":"Highway Star Tours Pvt Ltd","name":"Mr. Manoj Kumar Shrestha","phone":"9851026141","location":"Sinamangal"},{"number":198,"company":"Hill Side Travels & Tours Pvt Ltd","name":"Mr. Hari Prasad Pandey","phone":"9851064560","location":"sundhara"},{"number":199,"company":"Himalagiri Travels & Tours","name":"Mr. Angshuman Chatterjee","phone":"9802369473","location":"Naxal"},{"number":200,"company":"Himalayan 360 Pvt. Ltd.","name":"Mr. Amrit Nepal","phone":"9851167270","location":"Galkopakha Marg"},{"number":201,"company":"Himalayan Club Tour & Travel Pvt. Ltd","name":"M. Bishnu Pandey","phone":"9851065420","location":"Paknajol"},{"number":202,"company":"Himalayan Glory Travels & Tours Pvt Ltd.","name":"Mr. Basu Dev Thapaliya","phone":"9841459861","location":"Sanogaucharan"},{"number":203,"company":"Himalayan Guides Nepal Travels & Tours Pvt Ltd","name":"Mr. Iswari Paudel","phone":"9851022235","location":"Chandol"},{"number":204,"company":"Himalayan Leaders Tours & Travels Pvt. Ltd","name":"Mr. Jagat Bdr. Dahal","phone":"9851047789","location":"thamel"},{"number":205,"company":"Himalayan Panorama Tours Pvt Ltd.","name":"Mr. Furi Gelgen Sherpa","phone":"9801068852","location":"Sanogaucharan"},{"number":206,"company":"Himalayan Social Journey","name":"Mr. Ram Prasad Sapkota","phone":"9851137267","location":"Nayabazar"},{"number":207,"company":"Himalayan Trails Adventure Travels & Tours Pvt Ltd","name":"Mr. Hari Prasad Dharel","phone":"9851039480","location":"Lazimpat"},{"number":208,"company":"Himalayan Travel & Tours Pvt Ltd","name":"Mr. Anil Das Shrestha","phone":"9851025617","location":"Durbarmarg"},{"number":209,"company":"Himalayn Destination Pvt Ltd","name":"Mr. Deepak Nath Uprety","phone":"9851087712","location":"Dillibazar"},{"number":210,"company":"Holiday Adventure Tours & Travels Pvt Ltd","name":"Mr. Dhak Nath Kafle","phone":"9851019859","location":"thamel"},{"number":211,"company":"Holiday Expert Travel Pvt Ltd","name":"Mr. Bishal Shrestha","phone":"9801038551","location":"naxal"},{"number":212,"company":"Holiday Trip Nepal Pvt. Ltd.","name":"Mr. Hareram Karki","phone":"9851041879","location":"kathmandu mall"},{"number":213,"company":"Holiday World Nepal Pvt Ltd","name":"Mr. Amrit Kumar Dhakal","phone":"9851026887","location":"thamel"},{"number":214,"company":"Holy Himalayan Eco Trek Pvt Ltd","name":"Mr. Jyoti Adhikari","phone":"9851020061","location":"thamel"},{"number":215,"company":"Holyland Adventure Tours & Travel Pvt Ltd","name":"Mr. Hari Bhakta Shrestha","phone":"9851033991","location":"Amritmarg"},{"number":216,"company":"I.B.Z Travels 7 Tours Pvt. Ltd.","name":"Mr. Manoj Dhungana","phone":"9845959343","location":"Chapagaintar, Ba"},{"number":217,"company":"Ibiza Travels & Tours P. Ltd.","name":"Mr. Rabi Dhungana","phone":"9851127793","location":"chabahil"},{"number":218,"company":"Image Holidays pvt ltd","name":"Bijay Poudel","phone":"9801149169","location":"Pokhara"},{"number":219,"company":"IME Travel","name":"Mr. Arjun Poudel Sharma","phone":"9802064789","location":"lazimpat"},{"number":220,"company":"Impact Adventure pvt Ltd","name":"Pankaj Pradhananga","phone":"9851033864","location":"Bhaisepati, 25-lalitp"},{"number":221,"company":"Indra Travels & Tours Pvt Ltd","name":"Mr. Ram Prasad Shrestha","phone":"9818989450","location":"Putalisadak"},{"number":222,"company":"Innovate Travel Nepal","name":"Mr. Deepak Basnet","phone":"9801079777","location":"thamel"},{"number":223,"company":"Intel Roshi Tours & Travels Pvt Ltd","name":"Mr.Trilochan Neupane","phone":"9841341238","location":"Paknajol"},{"number":224,"company":"Jagadamba Tours & Travels Pvt Ltd","name":"Mr. Maya Prakash Bhatta","phone":"9841185161","location":"Dhangadi"},{"number":225,"company":"Jaya Travels & Tours Pvt Ltd","name":"Mr. Srawan Kumar Rana","phone":"9851021066","location":"Durbarmarg"},{"number":226,"company":"Jet Express Tours & World Transportation Pvt Ltd","name":"Mr. Swapan Kumar Dev","phone":"9851021167","location":"Dillibazar"},{"number":227,"company":"Jharna Nepal Travels & Tours Pvt Ltd","name":"Mr. Chhabi lal Bashyal","phone":"9851042489","location":"Thamel"},{"number":228,"company":"Jolly Gorkha Adventure Travel & Tours Pvt Ltd","name":"Mr. Bhupal Singh Karki","phone":"9851019452","location":"Durbarmarg"},{"number":229,"company":"Joy Travels & Tours Pvt Ltd","name":"Mr. Bijay Rijal","phone":"9851090471","location":"Jyatha"},{"number":230,"company":"Jugal Holidays Pvt. Ltd","name":"Mr. Vidur Prasad Khatiwada","phone":"9851008066","location":"Jyatha"},{"number":231,"company":"Jumbo Adventure Tours & Travels Pvt Ltd","name":"Mr. Thakur Prasad Bhatta","phone":"9851081525","location":"Thamel"},{"number":232,"company":"Kamana International Travel & Tour Pvt. Ltd","name":"Mr. Nawa Raj Bhatta","phone":"9851068665","location":"thamel"},{"number":233,"company":"Kathamandu Holidays Tours & Travel Pvt Ltd","name":"Mr. Krishna Prasad Dhakal","phone":"9851036440","location":"jyatha thamel"},{"number":234,"company":"Kathmandu Experience Travels & Tours Pvt Ltd","name":"Mr. Arun K. Regmi","phone":"9851036560","location":"Dillibazar"},{"number":235,"company":"Kathmandu Travels & Tours Pvt Ltd","name":"Mrs. Sangita Shrestha Einhaus","phone":"","location":"Battishputali, Gaushala"},{"number":236,"company":"Kathmandu-Lhasa Tours & Travels Pvt Ltd","name":"Mr. Karimulla Muslim","phone":"9851027310","location":"jyatha"},{"number":237,"company":"Key Way Travels & Tours Pvt Ltd","name":"Mr. Kasee Ram Adhikari","phone":"9851051378","location":"Nagpokhari"},{"number":238,"company":"Khahare Eco Tours Pvt. Ltd.","name":"Mr. Pradip Lamichhane","phone":"9851121118","location":"Dakshainkali"},{"number":239,"company":"Khangchen Travels & Tours Pvt. Ltd.","name":"Mr. Tenzin Sherpa","phone":"9808463681","location":"Boudha"},{"number":240,"company":"Khangri Trek Pvt Ltd","name":"Mr. Prabin K.C","phone":"9851020189","location":"Bhagawati Marg, Naxal"},{"number":241,"company":"Khumbi-ila Voyage Travels & Tours Pvt Ltd","name":"Mr. Zimbu Zambu Sherpa","phone":"9851020366","location":"Dharmabhakta Marg"},{"number":242,"company":"Kinetic Travels","name":"Mr. Sanu Satyal","phone":"9851018086","location":"Putalisadak"},{"number":243,"company":"Koili Tours P. Ltd.","name":"Mr. Puskar Raj Pathak","phone":"9813251407","location":"Baluwatar"},{"number":244,"company":"Kora Tours Pvt Ltd","name":"Mr. Bijay Amatya","phone":"9851032148","location":"Basundhara"},{"number":245,"company":"Koshi Tours & Travels Pvt Ltd","name":"Mr. Binay Basnet","phone":"9851030493","location":"Nagpokhari"},{"number":246,"company":"Kudan Travels & Tours Pvt Ltd","name":"Mr. Hari Prasad Parajuli","phone":"9851121207","location":"uttardhoka"},{"number":247,"company":"Kumari Travel","name":"Mr. Dinesh Basnet","phone":"9851062781","location":"Durbarmarg"},{"number":248,"company":"Lakhea Aaju Travels & Tours","name":"Mr. Rakesh Man Shrestha","phone":"9851040505","location":"jaisidewal"},{"number":249,"company":"Lalima Travel","name":"Mr. Dhruba Narayan Shrestha","phone":"9851022082","location":"Nayabazar"},{"number":250,"company":"Langtang –Ri Travels & Tours Pvt. Ltd.","name":"Ms. Pamfa Dhamala","phone":"9823010252","location":"Nepaltar"},{"number":251,"company":"Laser Travel & Tours Pvt. Ltd.","name":"Mr. Durga Muktan","phone":"9803200122","location":"Bhaisepati, 25-lalitpur"},{"number":252,"company":"Leaf Holidays Pvt. Ltd","name":"Mr. Gopal Thapa","phone":"9851035239","location":"thamel"},{"number":253,"company":"Leisure World Tours & Travels Pvt Ltd","name":"Mr. Bikash Gauchan","phone":"9851050360","location":"bagbazar"},{"number":254,"company":"Liberal Tours & Travels Pvt Ltd","name":"Mr. Kishor Tripathi","phone":"9851079772","location":"Bal mandir"},{"number":255,"company":"Liberty Holiday","name":"Mr. Ram Bahadur Ghale","phone":"9851014045","location":"Lazimpat"},{"number":256,"company":"Life Hinalaya Travel","name":"Mr. Shiba Hari","phone":"9841580884","location":"thamel"},{"number":257,"company":"Life's Good Tours & Treks Pvt. Ltd.","name":"Mr. Uttam Dhamala","phone":"9851006456","location":"thamel"},{"number":258,"company":"Light Travel & Tours Pvt Ltd","name":"Mr. Labin Udash","phone":"9851072252","location":"lazimpat"},{"number":259,"company":"Linkage Tours & Travels Pvt. Ltd.","name":"Mr. Pratik Lamichhane","phone":"9856061676","location":"Pokhara"},{"number":260,"company":"Little Pokhara Travels and Trekking Pvt.Ltd","name":"Mr. Pharendra Thapa","phone":"9856056042","location":"kamaladi"},{"number":261,"company":"Living Adventure Holidays Pvt. Ltd","name":"Mr. Anil Lama","phone":"9851030804","location":"lazimpat"},{"number":262,"company":"Long Vision Tours & Travels Pvt. Ltd.","name":"Mr. Ramesh Prasad Paudel","phone":"9801069548","location":"Bhagawatimarg, Naxal"},{"number":263,"company":"Loo Zum Travels and Tours Pvt. Ltd.","name":"Mr. Bhim Bahadur Gurung","phone":"9851099228","location":"Gongabu"},{"number":264,"company":"Losar Tours Travels Pvt Ltd","name":"Mr. Punya Poudel","phone":"9851020749","location":"Dillibazar"},{"number":265,"company":"Loyal Travels & Tours Pvt Ltd","name":"Mr. Krishna Acharya","phone":"9851032079","location":"Jyatha"},{"number":266,"company":"Lucky Travels & Tours Pvt Ltd","name":"Mr. Sanam Shakya","phone":"9851095029","location":"Hattisar"},{"number":267,"company":"Lumbini Holidays Tours & Travels Pvt. Ltd.","name":"Mr. Chuda Bahadur Jimba","phone":"9851004171","location":"thamel"},{"number":268,"company":"M.K Travelmart and Tours Pvt .ltd","name":"Mr. Megha Raj Bhusal","phone":"9851110816","location":"Kalanki"},{"number":269,"company":"Magnificent Travel","name":"Mr. Badri Pd. Rijal","phone":"9851052686","location":"thamel"},{"number":270,"company":"Maigar Tours & Travels Pvt. Ltd.","name":"Mr. Him Lal Panthi","phone":"9847833784","location":"Dang"},{"number":271,"company":"Maitri Travels & Tours Pvt. Ltd.","name":"Mr. Hem Raj Bastola","phone":"9851035841","location":"chabahil"},{"number":272,"company":"Makalu adventure","name":"Mr. Mohan Lamsal","phone":"9851037083","location":"thamel"},{"number":273,"company":"Mali Travel & Tours","name":"Mr. Nilendra Mali","phone":"9851031417","location":"Durbarmarg"},{"number":274,"company":"Malla Travels & Trek Service Pvt. Ltd.","name":"Mr. Sanjay Malla","phone":"9851003148","location":"Samakhushimarg"},{"number":275,"company":"Marshyangdi Travel & Tours Pvt Ltd","name":"Mr. Hari Prasad Subedi","phone":"9851023047","location":"Tokha"},{"number":276,"company":"Megabyte travels and Tours Pvt. Ltd","name":"Mr. Chitra Bdr. Gurung","phone":"9851038109","location":"Nagpokhari"},{"number":277,"company":"Metro Inn Tours & Travels P.Ltd","name":"Mrs. Kamala Giri","phone":"9856042036","location":"Pokhara"},{"number":278,"company":"Mohit Travels & Tours Pvt. Ltd","name":"Mr. Parmananda Bhandari","phone":"9858750070","location":"Jhapa"},{"number":279,"company":"Moon Sun Travels & Tours Pvt. Ltd","name":"Mr. Ramesh Thapa","phone":"9851034586","location":"Saraswoti marg"},{"number":280,"company":"Moondrops International Travels and Tours Pvt.Ltd","name":"Mr. ishan Puri","phone":"980132217","location":"Dhumbarahi"},{"number":281,"company":"Moonline Tours & Travel Pvt. Ltd.","name":"Ram Barakoti","phone":"9801020350","location":"Kaldharaheight"},{"number":282,"company":"Mosica Travels Pvt. Ltd.","name":"Mr. Rajendra Sapkota","phone":"9851090836","location":"thamel"},{"number":283,"company":"Mounatain Delight Travels and Tours Pvt. Ltd. Nepal Journey Travels Pvt.Ltd","name":"Mr. Ram Prasad Sapkota","phone":"9851089497","location":"thamel"},{"number":284,"company":"Mountain Buddha Holidays Pvt. Ltd.","name":"Mr. Prakash Sapkota","phone":"9851066719","location":"Hadigaun"},{"number":285,"company":"Muskan Travel & Tours Pvt. Ltd.","name":"Mr. Mobin Udash","phone":"9851066313","location":"Gahanapokhari"},{"number":286,"company":"My Everest Travels & Tours P. Ltd.","name":"Mr. Purusotam Thapaliya","phone":"9851069558","location":"thamel"},{"number":287,"company":"N.Z. Trip Nepal Pvt. Ltd.","name":"Mr. Ryan Rimal","phone":"9709121927","location":"Chhayacentre"},{"number":288,"company":"Namaste Sewaro Travel & Tours Pvt. Ltd","name":"Mr. Dhanjit Limbu","phone":"9851134936","location":"Sinamangal"},{"number":289,"company":"Namaste Tourism & Holidays Pvt. Ltd.","name":"Mr. Ashok Kumar Baniya","phone":"9851341100","location":"Hattisar"},{"number":290,"company":"Namaste Travel Pvt. Ltd.","name":"Mr. Mahendra Man Shrestha","phone":"9851020491","location":"Hattisar"},{"number":291,"company":"Nasyana Tour Services Pvt. Ltd.","name":"Mr. Hari Saran Neupane.","phone":"9802343327","location":"Lazimpat"},{"number":292,"company":"Natraj Tours & Travels Pvt. Ltd.","name":"Mr. Shikhar Prasai","phone":"9851025674","location":"Jwagal"},{"number":293,"company":"Nature Expess Travels Pvt. Ltd.","name":"Mr. Raju Shahi","phone":"9851020539","location":"Durbarmarg"},{"number":294,"company":"Nature Trail Travels & Tours Pvt. Ltd.","name":"Mr. Bishnu Prasad Subedi","phone":"9851022394","location":"thamel"},{"number":295,"company":"Nebula Travels & Tous Pvt. Ltd.","name":"Mr. Prem Prakash Aryal","phone":"9851094069","location":"Nagpokhari"},{"number":296,"company":"Neel Travel","name":"Mrs. Bimala Pradhan","phone":"9851067441","location":"Dharmabhakta Marg"},{"number":297,"company":"Nepal Big Mountain Travel company Pvt. Ltd.","name":"Mr. Sudarshan Nepal","phone":"9851145246","location":"thamel"},{"number":298,"company":"Nepal Dream Travels Service Pvt. Ltd.","name":"Ms. Shital Sharma Poudel","phone":"9841346650","location":"Lazimpat"},{"number":299,"company":"Nepal Himalayan Int'l","name":"Mr. Krishna Prasad Nepal","phone":"9860878849","location":"thamel"},{"number":300,"company":"Nepal Holiday Makers Tours & Travels Pvt. Ltd.","name":"Mr. Mahesh Dipak Koirala","phone":"9841388918","location":"Durbarmarg"},{"number":301,"company":"Nepal kamaz Tours & Travels (Pvt.) Ltd.","name":"Mrs. Gayatree Kansakar","phone":"9851032130","location":"Kantipath"},{"number":302,"company":"Nepal Kaze Travel Pvt. Ltd.","name":"Mr. Prithbi Shrestha","phone":"9851021950","location":"Kamalpokhari"},{"number":303,"company":"Nepal Nature Dot Com Pvt. Ltd.","name":"Mr. Rajendra Suwal","phone":"9851074300","location":"Chhetrapati"},{"number":304,"company":"Nepal Parikrama Tours and Travels Pvt. Ltd.","name":"Mr. Puskar Koirala","phone":"9851061694","location":"Pulchowk"},{"number":305,"company":"Nepal Recreation Tours and Vehicles pvt. ltd","name":"Dhruba prasad Dharel (MD)","phone":"9851136074","location":"thamel"},{"number":306,"company":"Nepal Sagarmatha Travels Pvt. Ltd.","name":"Mr. Ramesh Thapa","phone":"9851069798","location":"Sinamangal"},{"number":307,"company":"Nepal Snowjewel Travel & Tours Pvt. Ltd","name":"Ms. Anu Raut","phone":"9851193199","location":"chappal Karkhana"},{"number":308,"company":"Nepal Social Tours & Travels Pvt. Ltd.","name":"Mr. Basu Pandey","phone":"9841365230","location":"Paknajol"},{"number":309,"company":"Nepal South Asia International Travels & Tours Pvt. Ltd.","name":"Mr. Keshab Bhandari","phone":"9841206220","location":"thamel"},{"number":310,"company":"Nepal Teeka Travels Pvt. Ltd.","name":"Sangita Paudel","phone":"9856027424","location":"pokhara"},{"number":311,"company":"Nepal Travel Agency","name":"Mr. Arun Kumar Saraf","phone":"9851245501","location":"Laldurbar Marg"},{"number":312,"company":"Neved Holidays","name":"Ms. Nitisha Agrawal","phone":"9841479100","location":"Sinamangal"},{"number":313,"company":"New Road Travels and Tours Pvt. Ltd","name":"Mr. Sujan Acharya","phone":"9856068470","location":"thamel"},{"number":314,"company":"Nexus Travels & Tours Pvt. Ltd.","name":"Mr. Navaraj Dahal","phone":"9851031532","location":"thamel"},{"number":315,"company":"Novel International Travel Trek & Expeditions Pvt. Ltd.","name":"Mr. Narayan Khanal","phone":"9851087545","location":"thamel"},{"number":316,"company":"Oasis Holidays Travels and Pvt.Ltd","name":"Mr. Sandeep Phuyal","phone":"","location":""},{"number":317,"company":"Ojha Holidays Tours & travels Pvt. Ltd.","name":"Mr. Ramesh Prasad Ojha","phone":"9851092634","location":"Bhrikuti Chowk"},{"number":318,"company":"Oldlink Tours P. Ltd.","name":"Mr. Jhamkanath Acharya","phone":"9851009306","location":"thamel"},{"number":319,"company":"Omni Express Pvt. Ltd.","name":"Mr. Kuber Oli","phone":"9851026555","location":"Gairidhara"},{"number":320,"company":"One Globe Travels & Tourism Pvt. Ltd.","name":"Mr. Parasar Prasai","phone":"9801029342","location":"Lalitabhawan"},{"number":321,"company":"Open Heart Nepal Travel Pvt. Ltd","name":"Mr. Pom Narayan Shrestha","phone":"9856020088","location":"Manbhawan"},{"number":322,"company":"Open Sky Travel & Tours Pvt. Ltd.","name":"Mr. Prakash Shrestha","phone":"9851048393","location":"Sundhara"},{"number":323,"company":"Open Visit Nepal Travel & Tours Pvt. Ltd","name":"Mr. Chiranjibi Giri","phone":"9851136280","location":"sorakhutte, Khusibu"},{"number":324,"company":"Orbit International travels Pvt. Ltd.","name":"Mr. Drona K. Niraula","phone":"9851018552","location":"Kamalpokhari"},{"number":325,"company":"Oriental Holidays Travels & Tours Pvt. Ltd.","name":"Mrs. Pushpa C. Shrestha/Ms. Shrimala Shrestha","phone":"9851013816","location":"Baluwatar"},{"number":326,"company":"Origin Travels & Tours Pvt. Ltd.","name":"Mr. Bikash Maharjan","phone":"9841224842","location":"Panga"},{"number":327,"company":"Osho World travel Nepal Pvt. Ltd.","name":"Mr. Shyam Raj Thapaliya","phone":"9801032573","location":"Lazimpat"},{"number":328,"company":"Ouro Travel & Tours Pvt. Ltd.","name":"Mr. Mahesh Chandra Ghimire","phone":"9851407777","location":""},{"number":329,"company":"Outsight Travels & Tours Pvt. Ltd","name":"Mr. Dharma Raj Ghimire","phone":"9851099606","location":"thamel"},{"number":330,"company":"Oxford Travels & Tours Pvt. Ltd.","name":"Mr. Namaraj Bhetwal","phone":"9851071065","location":"Lekhanathamarg"},{"number":331,"company":"Padma Travels & Tours Pvt. Ltd","name":"Mr. Pradeep Prasad Udaya","phone":"9847029727","location":"Tansen"},{"number":332,"company":"Pamirs Travel Pvt.ltd","name":"Basant Bajracharya (MD)","phone":"9851088349","location":"Narayanchour"},{"number":333,"company":"Pangolin Travels Pvt. Ltd.","name":"Mr. Suresh Khattri","phone":"9851118863","location":"Putalisadak"},{"number":334,"company":"Paragon Travels & Tours Pvt. Ltd.","name":"Mr. Prakash Singh Karki/ Mrs. Mandira Karki","phone":"9851020493","location":"Kamalpokhari"},{"number":335,"company":"Park Vacation International Private Limited","name":"Mr. Sujan Timisina","phone":"9802379330","location":"Putalisadak"},{"number":336,"company":"Peace International Tours & Travels Pvt. Ltd.","name":"Mr. Sarbottam Lal Shrestha","phone":"9851021080","location":"Lazimpat"},{"number":337,"company":"Pearl Holidays Pvt. Ltd.","name":"Mr. Sudarshan Gajurel","phone":"9851316771","location":"Lazimpat"},{"number":338,"company":"Pigeon Travel & Tours Pvt. Ltd.","name":"Mr. Min Bahadur Khatri","phone":"9851027024","location":"Tokha"},{"number":339,"company":"Pinnacle Adventure & Tours Pvt. Ltd.","name":"Mr. Iswari Pandey","phone":"9851222865","location":"Thamel"},{"number":340,"company":"Plan Holidays Travel & Tours Pvt. Ltd.","name":"Mr. Kaladhar Baral","phone":"9851055102","location":"thamel"},{"number":341,"company":"Plan Nepal Travels & Tours Pvt. Ltd.","name":"Mr. Tika Datta Barakoti","phone":"9801044333","location":"Thamel"},{"number":342,"company":"Pokhara Flight Centre Tours & Travels P.Ltd","name":"Mr. Rishi Ram Paudel","phone":"9851328155","location":"pokhara"},{"number":343,"company":"Prabas Travel & Tours Pvt. Ltd.","name":"Mr. Prakash Lohani","phone":"9851089619","location":"Thamel"},{"number":344,"company":"Prayas Travel & Tours Pvt. Ltd.","name":"Mr. Prakash K.C","phone":"9851097002","location":"Nagpokhari"},{"number":345,"company":"Precious Travels & Tours Pvt. Ltd.","name":"Mr. Kumar Mani Thapaliya","phone":"9851124186","location":"thamel"},{"number":346,"company":"Present Travels Pvt. Ltd","name":"Mr. Parshu Ram Ghimire","phone":"9851103114","location":"thamel"},{"number":347,"company":"President Travels & Tours Pvt. Ltd.","name":"Mr. Bhola Bikram Thapa","phone":"9851022190","location":"Durbarmarg"},{"number":348,"company":"Prestige Nepal Travels & Tours Pvt. Ltd.","name":"Ms. Debaki Gurung","phone":"9851012296","location":"Mandikhatar"},{"number":349,"company":"Prime Holidays Travels & Tours Pvt. Ltd","name":"Mr. Bhagavat Devkota","phone":"9851009620","location":""},{"number":350,"company":"Proficient Travel Pvt. Ltd.","name":"Mr. Bhaivav Bikram Rana","phone":"9851069970","location":"Uttardhoka"},{"number":351,"company":"Pupil Travel & Tours Pvt. Ltd.","name":"Mr. Babu Ram Rasaili","phone":"","location":"Basantapur"},{"number":352,"company":"Purple Holidays Pvt. Ltd.","name":"Mr. Kamal Puri","phone":"9851052642","location":"Durbarmarg"},{"number":353,"company":"Raaika tours & Treks Pvt. Ltd","name":"Mr. Amar Shahi","phone":"9851031772","location":"Gyaneshwor"},{"number":354,"company":"Radha Krishna Holidays Pvt. Ltd.","name":"Mr. Ankit Jaiswal","phone":"9804454054","location":"Nayabazar"},{"number":355,"company":"Rainbow Adventure Tours & Travels Pvt. Ltd.","name":"Mr. Kishor Dahal","phone":"9856027273","location":"pokhara"},{"number":356,"company":"Rainbow Safari Tours & Travels Pvt. Ltd.","name":"Mr. Keshav Prasad Dahal","phone":"9851047384","location":"thamel"},{"number":357,"company":"Rainbow Travels & Tours Pvt. Ltd.","name":"Mr. Gunja Bahadur Ranjit","phone":"9851035412","location":"Gairidhara"},{"number":358,"company":"Rama Tours Nepal Pvt. Ltd.","name":"Mr. Raj K. Shahi","phone":"9851023924","location":"Patan"},{"number":359,"company":"Rasbita International Travels & Tours Pvt. Ltd.","name":"Mr. Ram Sovit Nayak/Ms. Sabita Kumari Mahato Nayak","phone":"9802031512","location":"Gaushala"},{"number":360,"company":"Real Adventure Nepal","name":"Mr. Shankari Adhikari","phone":"9851035699","location":"thamel"},{"number":361,"company":"Recent & Rhythm Tours & Travels Pvt. Ltd.","name":"Mr. Prakash Thapa","phone":"9851098806","location":"Uttardhoka"},{"number":362,"company":"Red Planet Tours & Travels Pvt. Ltd.","name":"Mr. Bhupal Raj Shrestha","phone":"9842633669","location":"jhapa"},{"number":363,"company":"Redbud Holidays Travels & Tours Pvt. Ltd.","name":"Mr. Jagendra Poudel","phone":"9801093738","location":"Budhanilkantha"},{"number":364,"company":"Regency Nepal Travels & Tours Pvt. Ltd.","name":"Mr. Prasant Uprety","phone":"9851047480","location":""},{"number":365,"company":"Rex Travels Pvt Ltd","name":"Mr. Sunil Gupta","phone":"9851054149","location":"Jawalakhel"},{"number":366,"company":"Rhino Travel Agency Pvt Ltd","name":"Mr. Hari Prasad Ghimire","phone":"9851020208","location":"thamel"},{"number":367,"company":"Rigel Adventure","name":"Mr. Subodh Pudasaini","phone":"9851094550","location":"Gyaneshwor"},{"number":368,"company":"Rising Travels Pvt Ltd","name":"Mr. Pawan Tuladhar","phone":"9801020267","location":"Kamalpokhari"},{"number":369,"company":"Riyan Travel & Tours Pvt Ltd","name":"Ms. Geeta Dhakal","phone":"9841880225","location":"Gongabu"},{"number":370,"company":"Roaming Nepal Travel & Tours Pvt. Ltd.","name":"Mr. Samir Barakoti","phone":"9851193452","location":"Nell saraswoti marg"},{"number":371,"company":"Rosha Travels & tours Pvt Ltd","name":"Mr. Sagar Bista","phone":"9851063615","location":"thamel"},{"number":372,"company":"Roshi Tours & Travels Pvt Ltd","name":"Mr. Som Prasad Sharma","phone":"9851089308","location":"Sinamangal"},{"number":373,"company":"Royal Mountain Holidays Nepal Pvt Ltd","name":"Mr. Suresh Kumar Shrestha","phone":"9851025071","location":"Durbarmarg"},{"number":374,"company":"Royal mountain Travel Pvt Ltd","name":"Mr. Shiva Prasad Dhakal","phone":"9802012222","location":"Laldurbar Marg"},{"number":375,"company":"Royal Travels & Tours Pvt. Ltd","name":"Mr. Dinanath Pandey","phone":"9851038809","location":"Putalisadak"},{"number":376,"company":"Ruiyang Tours & Travel P. Ltd.","name":"Mr. Hari Prasad Dhamala","phone":"9849712844","location":"Jyatha, Thamel"},{"number":377,"company":"Rupakot Tours & Travels Pvt Ltd","name":"Mr. Rishi Ram Dhamala","phone":"9851082483","location":"Hattisar"},{"number":378,"company":"Rupse Holidays Pvt.Ltd","name":"Mr. Ramesh Parajuli","phone":"9802000658","location":"Baluwatar"},{"number":379,"company":"Rural Heritage Journey Pvt Ltd","name":"Mr. Niraj Shrestha","phone":"9851023167","location":""},{"number":380,"company":"S N T Holidays Pvt Ltd","name":"Mr. Shri Ram Thapa","phone":"9841022794","location":""},{"number":381,"company":"Saathi Nepal Travel & Tours Pvt Ltd","name":"Mr. Kishor Raj Pandey","phone":"9851111361","location":"samatamarg"},{"number":382,"company":"Saiyu Travels Pvt. Ltd.","name":"Mr. Rabi Nath Paudel","phone":"9851021171","location":"Sinamangal"},{"number":383,"company":"Sambat Travels Pvt Ltd.","name":"Mr. Mukunda Sharma","phone":"9802019042","location":"Hattisar"},{"number":384,"company":"Sampurna Adventure Pvt Ltd","name":"Mr. Sajan Man Mulmi","phone":"9851022615","location":"Dholahiti"},{"number":385,"company":"Samrat Tours & Travels Pvt Ltd","name":"Mr. C. N. Pandey","phone":"9851030564","location":"Gairidhara"},{"number":386,"company":"Sanctuary Tours Pvt Ltd","name":"Mr. Tulsi Gyawali","phone":"9851023043","location":"Chandol"},{"number":387,"company":"Satyam Tours & Travels Pvt Ltd","name":"Mr. Amrit Adhikari","phone":"9851024186","location":"Jyatha, Thamel"},{"number":388,"company":"Sawari Holiays","name":"Mr. Sudip Nepal","phone":"9851161568","location":"Nayabazar"},{"number":389,"company":"Sayapatri Travels Nepal Pvt Ltd","name":"Mr. Khem Bahadur Thapa","phone":"9851018182","location":"New Buspark"},{"number":390,"company":"Scenic Adventure Tours & Travels","name":"Mr. Khem Raj Niroula/ Ms. Kamala Adhikari","phone":"9841925260","location":"thamel"},{"number":391,"company":"Scenic Mountain Travels & Tours Pvt Ltd","name":"Mr. Ghanashyam Ghimire","phone":"9851029910","location":"Thamel"},{"number":392,"company":"Scorpio Travel & Tours Pvt Ltd","name":"Ms. Mahima Basukala/ Mr. Prabhu Ram Shrestha","phone":"9802017648","location":"bagdurbar"},{"number":393,"company":"SDU Travels Pvt Ltd/ Go Nepal Travel","name":"Mr. Sanjay Bhakta Mathema","phone":"9801079776","location":"Thapathali"},{"number":394,"company":"SEA & SKY Tours & Travels Pvt Ltd","name":"Mr. Achyut Sharma Guragain","phone":"9851027330","location":"Shifal"},{"number":395,"company":"Sea Links Travel & Tours P. Ltd.","name":"Mr. Raju Dhakal","phone":"9851094742","location":"Nagpokhari"},{"number":396,"company":"See Nepal Travel","name":"Mr. Chet Raj Khanal","phone":"9851099603","location":"Lazimpat"},{"number":397,"company":"Selected Tour and Travels Pvt. Ltd.","name":"Ms. Bimala Dahal","phone":"9851240268","location":"Maharajgunj"},{"number":398,"company":"Seven Peaks Tours & Travels Pvt Ltd","name":"Mr. Bharat Malla","phone":"9851105803","location":"Shukra Bhawan"},{"number":399,"company":"Seven Star International Travel and Tours Pvt. Ltd.","name":"Mr. Shiva Sharma Bastola","phone":"9851179083","location":"Hattisar"},{"number":400,"company":"Seven Steps Tours & travels Pvt Ltd","name":"Mr. Jitendra Silwal","phone":"9851064658","location":"Maligaun"},{"number":401,"company":"Shakti Travels & Tours Pvt Ltd","name":"Mr. Suresh Nakarmi","phone":"9841226220","location":"Lazimpat"},{"number":402,"company":"Shangri-la Tours Pvt Ltd","name":"Mr. Ashok Pokhrel","phone":"9851021563","location":"Chandol"},{"number":403,"company":"Sharp Travels & Tours Pvt Ltd","name":"Mr. Subash Gautam","phone":"9851175655","location":"Hattisar"},{"number":404,"company":"Shashi's holidays Int'l travel & Tours Pvt Ltd","name":"Ms. Yubika Bhandari","phone":"9851022609","location":"Tripureshwore"},{"number":405,"company":"Sherpa Adventure Travel","name":"Mr. Pasang Dawa Sherpa","phone":"9851021229","location":"Naxal"},{"number":406,"company":"Shikhar Holidays Nepal Pvt. Ltd.","name":"Mr. Suman Suchikar","phone":"9801121865","location":"Pulchowk"},{"number":407,"company":"Shiva Holidays Pvt Ltd","name":"Mrs. Srijana Maharjan","phone":"9851025242","location":"Baluwatar"},{"number":408,"company":"Shiva Travels Pvt Ltd","name":"Mr. Arjun Prasad Sharma","phone":"9851022100","location":"Uttardhoka"},{"number":409,"company":"Shivalaya Holidays Pvt. Ltd.","name":"Ms. Sushma Aryal","phone":"9851206780","location":"Balaju"},{"number":410,"company":"Shivam Group Holidays","name":"Mr. Ram chandra Shrestha","phone":"","location":"Lazimpat"},{"number":411,"company":"Shodip Travel & Tours Pvt. Ltd.","name":"Mr. Deepak Marishani","phone":"9851098425","location":"thamel"},{"number":412,"company":"Shuang Qi Tours Pvt Ltd","name":"Mr. Bishwesh Shrestha","phone":"9851021483","location":"Kalimati"},{"number":413,"company":"Shubham Travel & Tours Pvt. Ltd.","name":"Mr. Dinesh Mainali","phone":"9841827956","location":"Kamalpokhari"},{"number":414,"company":"Sierra International Travel & Tours Pvt Ltd","name":"Unknown","phone":"","location":""},{"number":415,"company":"Signature Tours Pvt Ltd","name":"Mr. Prajwol Malekoo","phone":"9851199980","location":"Lazimpat"},{"number":416,"company":"Simsime Travels & Tours Pvt. Ltd","name":"Mr. Suraj Shahi","phone":"9810020908","location":"Gyaneshwor"},{"number":417,"company":"Sincere Travels Pvt Ltd","name":"Mr. Shantosh Gurung","phone":"9851064390","location":"Balaju"},{"number":418,"company":"Sita World Travel Nepal Pvt","name":"Ms. Deenam Lamichhane","phone":"9851048979","location":"Jwagal, Kupondole"},{"number":419,"company":"Sitasma Travel & Tours Pvt. Ltd.","name":"Mr. Resham Bahadur Karki","phone":"9851108116","location":"Bhawanbahal"},{"number":420,"company":"Sky Bridge Tours & Travels Pvt Ltd","name":"Mr. Resh Narayan Aryal","phone":"9841281491","location":"Kamalpokhari"},{"number":421,"company":"Skylark Himalayan Tours & Travels Pvt.Ltd","name":"Mr. Tara Prasad Gautam","phone":"9856010460","location":"Lakeside"},{"number":422,"company":"Skylord Travels & Tours Pvt Ltd","name":"Mr. Sadhu Ram Thapa","phone":"9851164709","location":"Paknajol"},{"number":423,"company":"Skypass Travels & Tours Pvt Ltd","name":"Mr. Arjun Kumar Ghimire","phone":"9851098262","location":"Nagpokhari"},{"number":424,"company":"Smart Holidays Pvt. Ltd.","name":"Mr. Bal Karishna Khadka","phone":"9851180178","location":"Hattisar"},{"number":425,"company":"Snowland Travel & Tours pvt. Ltd.","name":"Mr. Ramesh Man Malekoo","phone":"9841881756","location":"Kantipath"},{"number":426,"company":"Society Int'l Travel Services Pvt Ltd","name":"Mr. Rabi Chandra Singh","phone":"9801023698","location":"Narayanhitipath"},{"number":427,"company":"Society Travel Services Pvt Ltd","name":"Mr. Sunil Sharma","phone":"9801021555","location":"Hattisar"},{"number":428,"company":"Solution Tours & Travels Pvt Ltd","name":"Mr. Saroj Silwal","phone":"9841212138","location":"Baluwatar"},{"number":429,"company":"Specialized Tours & Travel Pvt Ltd","name":"Mr. Sanjeev Harsha Bajracharya","phone":"9851035404","location":"Lazimpat"},{"number":430,"company":"Speedy Tourism & Travels Pvt. Ltd.","name":"Mr. Umesh Danai","phone":"9851077317","location":"thamel"},{"number":431,"company":"Spiritual Travels & Tours Pvt Ltd","name":"Mr. Bharat Sharma","phone":"9751005690","location":"sundhara"},{"number":432,"company":"Sports Tours & Travels Pvt. Ltd.","name":"Mr. Rajendra G.C","phone":"9851091661","location":"Jhamsikhel"},{"number":433,"company":"Stream Travel Services Pvt.Ltd","name":"Mr. Bhaivab Bikram Rana","phone":"9851069970","location":"Dhapakhel"},{"number":434,"company":"Success Travels & Treks Pvt. Ltd","name":"Mr. Rabi Chandra Singh","phone":"980113321","location":"Hattisar"},{"number":435,"company":"Sulav Travels & Tours P. Ltd.","name":"Mr. Bhuwan K. Shrestha","phone":"9803598035","location":"Manbhawan"},{"number":436,"company":"Sumegh Tours & Travels Pvt Ltd","name":"Mr. Megh Bahadur Khatri","phone":"9851082512","location":"Kamaladi"},{"number":437,"company":"Sumire Tours & Travel sP. Ltd.","name":"Mr. Dipendra Khanal","phone":"","location":""},{"number":438,"company":"Summit International Travels and Tours pvt ltd","name":"Anil Regmi","phone":"9849614153","location":"thamel"},{"number":439,"company":"Sunshine Travel Agency P. Ltd.","name":"Mr. Dhurba Ghimire","phone":"9851199606","location":"thamel"},{"number":440,"company":"Suruchi Travels & Tours Pvt Ltd","name":"Ms. Renu Bajracharya","phone":"9851024020","location":"Jamal"},{"number":441,"company":"Swaa Holidays Pvt. Ltd.","name":"Mrs. Jiswan Tuladhar","phone":"9851084973","location":"Gairidhara"},{"number":442,"company":"Swaa Tours & Travels Pvt Ltd","name":"Mrs. Jiswan Tuladhar","phone":"9851084973","location":"Gairidhara"},{"number":443,"company":"Swargadwari Travel & Tours Pvt. Ltd.","name":"Mr. Tika Ram Kafle","phone":"9851056950","location":"Gongabu"},{"number":444,"company":"Swift Holidays Pvt. Ltd.","name":"Mr. Milan Nepal","phone":"9851148057","location":"sorakhutte, Khusibu"},{"number":445,"company":"Swornim Tours & Travel Pvt. Ltd","name":"Mr. Suraj Shrestha","phone":"9851032762","location":"Khusibu"},{"number":446,"company":"Taj Mahal Travels & Tours Pvt. Ltd.","name":"Mr. Arjun Prasad Dharel","phone":"985-1185407","location":"satungal"},{"number":447,"company":"Terai Tours & Travel Pvt Ltd","name":"Mr. Bigyan Aryal","phone":"9851193245","location":"thamel"},{"number":448,"company":"Thai Nepal Travels & Tours Pvt Ltd","name":"Mr. Rajendra Bhatta","phone":"9841326314","location":"Samakhusi"},{"number":449,"company":"Thamserku Travel Pvt Ltd","name":"Mr. Lhakpa Sonam Sherpa","phone":"9851027155","location":"Basundhara"},{"number":450,"company":"The Everest Holidays","name":"Mr. Ganesh Simkhada/Mr. Shreejan Simkhada","phone":"9851022303","location":"Banasthali"},{"number":451,"company":"The Explore Nepal Pvt Ltd","name":"Mr. Bharat Kumar Basnet","phone":"9851022190","location":"Binayakmarg"},{"number":452,"company":"Tibet International Travels & Tours Pvt. Ltd.","name":"Mr. Lila Baldav Dahal","phone":"9851189540","location":"tridevimarg"},{"number":453,"company":"Ticket Kaksha Travel and Tours Pvt. Ltd.","name":"Mr. Prabal Shrestha","phone":"985115568","location":"Boudhanath"},{"number":454,"company":"Tirupati holidays Tours & Travels Pvt Ltd","name":"Mr. Ram Chandra Panta","phone":"9851056569","location":"Naxal"},{"number":455,"company":"Top of The world Travels Pvt Ltd","name":"Mr. Rajan Mishra","phone":"9851047422","location":"Hattisar"},{"number":456,"company":"Touch Kailash Travel & Tours Pvt Ltd","name":"Mr. Basu Kumar Adhikari","phone":"9851092632","location":"thamel"},{"number":457,"company":"Tour Desk International Nepal Pvt Ltd","name":"Mr. Shanker Prasad Sharma","phone":"9851031021","location":"Tripureshwore"},{"number":458,"company":"Tour link Travels & Tours","name":"Mr. Narayan Dhungana","phone":"9851102703","location":""},{"number":459,"company":"Trail Blazer Travels & Tours Pvt Ltd","name":"Mr. Suresh Amgain","phone":"9851027025","location":"Thamel"},{"number":460,"company":"Trans Holidays Travel & Tours Pvt. Ltd.","name":"Mr. Bed Prakash Uprety","phone":"9851068021","location":"Lazimpat"},{"number":461,"company":"Travel & Events Nepal","name":"Ms. Rupa Kumari Mainali","phone":"9851027047","location":"Putalisadak"},{"number":462,"company":"Travel Corporation Nepal Pvt Ltd","name":"Mr. Sudama Karki Chhetri","phone":"9851055098","location":"Dhapasi"},{"number":463,"company":"Travel Design Pvt.Ltd","name":"Ms. Shivangi Shah","phone":"9851090831","location":"Bhagawatibahal"},{"number":464,"company":"Travel House USA Pvt Ltd","name":"Mr. Binod Shrestha","phone":"9851020621","location":"New Baneshwore"},{"number":465,"company":"Travel Inquiry Pvt. Ltd.","name":"Mr. Pravesh Khatri","phone":"985125788","location":"Bagbazar"},{"number":466,"company":"Travel Light Pvt Ltd","name":"Ms. Kamla Gurung","phone":"9851022205","location":"Putalisadak"},{"number":467,"company":"Travel Link Services","name":"Mr. Lok P. Silwal","phone":"9851022984","location":"Chhetrapati"},{"number":468,"company":"Travel Media Nepal Pvt Ltd","name":"Mr. Maheshwor Pandey","phone":"9851098093","location":"Lazimpat"},{"number":469,"company":"Travel Nepal Holidays P. Ltd.","name":"Mr. Ankit Khanal","phone":"9860900064","location":"thamel"},{"number":470,"company":"Travel Net international Pvt Ltd","name":"Mr. Hari Bol Thapa","phone":"9851035307","location":"Panipokhari"},{"number":471,"company":"Travel Ready Pvt. Ltd.","name":"Mr. Jagadishwar Adhikari","phone":"9851035908","location":"thamel"},{"number":472,"company":"Travel Route Pvt. Ltd.","name":"Ms. Meenu Shakya","phone":"9841311010","location":"Kupondol"},{"number":473,"company":"Travel Station pvt ltd","name":"Gokul Prasad Khanal (MD)","phone":"9851231147","location":"Putalisadak"},{"number":474,"company":"Travelling Yak Tours And Travels P.Ltd","name":"Mr. Arjeet Dhoj Joshi/ Ms. Ankeeta shrestha","phone":"9801144848","location":"Bakhundole, Lalitpu"},{"number":475,"company":"Travelspot Pvt.Ltd.","name":"Deepak Kumar Chaulagai","phone":"9851229693","location":"Baluwatar"},{"number":476,"company":"Trek and Trails Nepal Pvt.Ltd","name":"Mr. Ujjwol Dhakal","phone":"9761642346","location":"Lazimpat"},{"number":477,"company":"Trip Land Travels & Tours Pvt. Ltd.","name":"Mr. Vijay Jaiswal","phone":"9851126300","location":"Ratopul"},{"number":478,"company":"Trip Select Pvt. Ltd.","name":"Mr. Shishir Bhattarai","phone":"9851132490","location":"Baluwatar"},{"number":479,"company":"Trip to Nepal Pvt. Ltd.","name":"Mr. Sukendra Guruwacharya","phone":"9851009999","location":"Lazimpat"},{"number":480,"company":"Trips Out Pvt Ltd","name":"Mr. Anik Kumar Thapa","phone":"9801022256","location":"Bagdol"},{"number":481,"company":"Twins Travels and Tours Pvt.Ltd","name":"Mr. Dalbir Bhandari","phone":"9851180182","location":"Samakhusi"},{"number":482,"company":"Typical Nepal Travels Pvt Ltd","name":"Mr. Krishna Prasad Regmi","phone":"9841626777","location":"Saraswotimarg"},{"number":483,"company":"Union International Tours & Travel Pvt Ltd","name":"Mr. Krishna Prasad Gyawali","phone":"9851024201","location":"Chinatown"},{"number":484,"company":"United Tours & Travels Pvt Ltd","name":"Mr. Madhusudan Lamichhane","phone":"9851015886","location":"Kalimati"},{"number":485,"company":"Universal Tours & Travels P. Ltd.","name":"Mr. Parasar Prasai.","phone":"9801029342","location":"Lalitabhawan"},{"number":486,"company":"Up Everest Travel","name":"Mr. Dipen Pradhan","phone":"9801222161","location":"Jwagal, Kupondole"},{"number":487,"company":"Vagari Travels & Tours Pvt. Ltd.","name":"Mr. Basundhara Dangol","phone":"9841243412","location":"Jhamsikhel"},{"number":488,"company":"Vaishali Travels & Tours Pvt Ltd","name":"Mr. Rajendra Bhattarai","phone":"9851052536","location":"thamel"},{"number":489,"company":"Verge Voyage Pvt Ltd","name":"Mrs. Sangita Jirel Bade","phone":"9851034245","location":"Gairidhara"},{"number":490,"company":"Vijay Travels & Tours Pvt Ltd","name":"Mr. Prem Bahadur Katuwal","phone":"9851022690","location":"Kapan Marg"},{"number":491,"company":"Visit Nepal Travel & Tours Pvt Ltd","name":"Mr. Hari Gopal Pradhan","phone":"9851031888","location":"kamalpokhari"},{"number":492,"company":"Vista Travels & Tours Pvt Ltd","name":"Mr. Bhupendra Man Pradhan","phone":"9851065929","location":"Nagpokhari"},{"number":493,"company":"Vyas Travel & Tours P. Ltd.","name":"Mr. Deepak Bhattarai","phone":"9851144960","location":"KtM"},{"number":494,"company":"Welcome Nepal Treks Pvt. Ltd.","name":"Mr. Nawaraj Thapaliya","phone":"9841767236","location":"thamel"},{"number":495,"company":"Well Nepal Travel & Tours Pvt Ltd","name":"Mr. Ramesh Ghimire","phone":"9851136944","location":"Lazimpat"},{"number":496,"company":"White Mountain Travel Agency of Nepal","name":"Mr. Niraj K.C","phone":"9851175734","location":"Tokha"},{"number":497,"company":"Wild Yak Travels & Tours Pvt. Ltd.","name":"Mr. Jitendra Jhakri","phone":"9851025066","location":"Boudha"},{"number":498,"company":"Wind Horse Holidays Holidays","name":"Mr. kumar Parajuli","phone":"9851161395","location":"Boudha"},{"number":499,"company":"Wonderland Travels Nepal Pvt Ltd","name":"Mr. K. P. Sharma","phone":"9851017794","location":"Gyaneshwor"},{"number":500,"company":"World Express Travels & Tours Pvt. Ltd.","name":"Mr. Tika Ram Bhandari","phone":"9851135197","location":"thamel"},{"number":501,"company":"World Fovour Travel & Tours Pvt Ltd","name":"Mr. Raj Kumar Devkota","phone":"9851002579","location":"Thamel"},{"number":502,"company":"World Touch Travels &Tours P.Ltd.","name":"Mr.Ramesh Paudel","phone":"9841732966","location":"Ktm"},{"number":503,"company":"World Trade Travel & Tours Pvt Ltd","name":"Mr. Shree Ram Pandey","phone":"9843337660","location":"Hattisar"},{"number":504,"company":"World Vacations Travels & Tours Pvt Ltd","name":"Mr. Shiva Ram Bhatta","phone":"9751081914","location":"Gairidhara"},{"number":505,"company":"Worldways Tours & Travels Pvt. Ltd.","name":"Mr. Om Prakash Mehta/Mr. Varun Mehta","phone":"9851020945","location":"Swayambhu Marg, Nayabazar"},{"number":506,"company":"Worldwide Asian Travels & Tours Pvt Ltd","name":"Mr. Mahendra Khanal","phone":"9851024565","location":"Kamaladi"},{"number":507,"company":"Yacca Travels & Tours Pvt Ltd","name":"Mr. Bhim Bahadur Roka","phone":"9801023284","location":"Uttardhoka"},{"number":508,"company":"Yangla Travels Pvt. Ltd.","name":"Mr.Himal Thapa","phone":"9851047120","location":"thamel"},{"number":509,"company":"Yatra Holiday Pvt. Ltd.","name":"Mr. Padam Prasad Kattel","phone":"9841979507","location":"Durbarmarg"},{"number":510,"company":"Yatri Bus P.Ltd","name":"Mr. Hari Ram Adhikari","phone":"9856034888","location":"Pokhara"},{"number":511,"company":"Yes Yatra Tours Pvt. Ltd.","name":"Mr. Prabin Kaji Baniya","phone":"9851060823","location":"Dapakhel"},{"number":512,"company":"Yeti Adventure Tours Travels Pvt Ltd","name":"Mr. Krishna Acharya","phone":"9851356331","location":"Bagdurbar"},{"number":513,"company":"Yeti Holidays Pvt Ltd","name":"Mr. Daman Pradhan","phone":"9851040405","location":"Tilganga"},{"number":514,"company":"Yeti Travel Pvt Ltd","name":"Mr. Vivek Bahadur Basnyat","phone":"9851022506","location":"Pulchowk"},{"number":515,"company":"Yo-Yakkha Travel & Tours Pvt Ltd","name":"Mr. Joy Dewan","phone":"9851020378","location":"Narayanchowk, Naxal"},{"number":516,"company":"Zen Nepal Tour & Travel Pvt Ltd","name":"Mr. Suraj Basnet","phone":"9851021354","location":"thamel"},{"number":517,"company":"Zen Travels & Tours Pvt Ltd","name":"Mr. Ramesh Rajbhandari","phone":"9851021354","location":"Kamaladi"},{"number":518,"company":"Zenith Experiences Travels Services Pvt Ltd","name":"Ms. Mihika Dhakhwa","phone":"9851031448","location":"Narayanchour"},{"number":519,"company":"Zenith Travels Pvt Ltd","name":"Mr. Joy Dewan","phone":"9851020378","location":"Narayanchour"},{"number":520,"company":"Zeo Tourism Pvt. Ltd.","name":"Ms. Gunu Lama","phone":"9813641003","location":"Baluwatar"},{"number":521,"company":"Zero Point Travel and Tours pvt ltd","name":"Mr. Chet Bahadur Karki","phone":"9856031455","location":"Pokhara"},{"number":522,"company":"Zhu Feng Travel & Tours","name":"Mr. Pradip Bhurtel","phone":"9841490854","location":"thamel"}];
+
+let members = MEMBERS;
+let teams = { yubika: [], bharat: [], jiswan: [], confused: [], details: [] };
+let notes = {};
+let customLists = {};
+let currentEditId = null;
+let currentListName = null;
+
+function init() {
+  const saved = localStorage.getItem('natta_teams');
+  if (saved) teams = JSON.parse(saved);
+  const savedNotes = localStorage.getItem('natta_notes');
+  if (savedNotes) notes = JSON.parse(savedNotes);
+  const savedLists = localStorage.getItem('natta_lists');
+  if (savedLists) customLists = JSON.parse(savedLists);
+  if (location.hash && location.hash.length > 1) {
+    try {
+      const shared = JSON.parse(atob(location.hash.slice(1)));
+      if (shared.teams) teams = shared.teams;
+      if (shared.notes) notes = shared.notes;
+      if (shared.customLists) customLists = shared.customLists;
+    } catch(e){}
+  }
+  renderAll();
+  updateStats();
+}
+
+function saveTeams() {
+  localStorage.setItem('natta_teams', JSON.stringify(teams));
+  localStorage.setItem('natta_notes', JSON.stringify(notes));
+  localStorage.setItem('natta_lists', JSON.stringify(customLists));
+  updateStats();
+}
+
+function updateStats() {
+  document.getElementById('totalMembers').textContent = members.length;
+  document.getElementById('yubikaCount').textContent = teams.yubika.length;
+  document.getElementById('bharatCount').textContent = teams.bharat.length;
+  document.getElementById('jiswanCount').textContent = teams.jiswan.length;
+  document.getElementById('confusedCount').textContent = teams.confused.length;
+  document.getElementById('customCount').textContent = Object.keys(customLists).length;
+}
+
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById('panel-' + tab).classList.add('active');
+  if (tab === 'teams') renderTeams();
+  if (tab === 'lists') renderLists();
+}
+
+function getTeam(num) {
+  for (const [key, arr] of Object.entries(teams)) {
+    if (arr.includes(num)) return key;
+  }
+  return '';
+}
+
+function memberCard(m, options = {}) {
+  const team = getTeam(m.number);
+  const note = notes[m.number] || '';
+  const teamBadge = team ? `<span class="badge badge-${team}">${team}</span>` : '';
+  const phoneClean = m.phone ? m.phone.replace(/-/g, '').replace(/,/g, '') : '';
+  const whatsapp = phoneClean ? `<a href="https://wa.me/977${phoneClean}" target="_blank" class="btn btn-sm btn-outline">💬 WhatsApp</a>` : '';
+  const actions = [];
+  if (!options.hideActions) {
+    actions.push(`<button class="btn btn-sm btn-primary" onclick="openDetails(${m.number})">✏️ Details</button>`);
+    actions.push(whatsapp);
+  }
+  if (options.removeFromList) {
+    actions.push(`<button class="btn btn-sm btn-danger" onclick="removeFromList('${options.listName}', ${m.number})">🗑️ Remove</button>`);
+  }
+  if (options.addToList) {
+    actions.push(`<button class="btn btn-sm btn-primary" onclick="addToList('${options.listName}', ${m.number})">➕ Add</button>`);
+  }
+  return `
+  <div class="member-card">
+    <div class="num">#${m.number}</div>
+    <div class="name">${m.name || 'Unknown'}</div>
+    <div class="company">${m.company || ''}</div>
+    <div class="meta">
+      <span>📞 ${m.phone || 'N/A'}</span>
+      <span>📍 ${m.location || 'N/A'}</span>
+    </div>
+    ${teamBadge}
+    ${note ? `<div style="margin-top:8px;font-size:0.8rem;color:var(--muted);background:#0f172a;padding:8px;border-radius:6px;">📝 ${note}</div>` : ''}
+    <div class="actions">${actions.join('')}</div>
+  </div>`;
+}
+
+function renderAll() {
+  const q = document.getElementById('globalSearch').value.toLowerCase();
+  const filtered = members.filter(m =>
+    (m.name && m.name.toLowerCase().includes(q)) ||
+    (m.company && m.company.toLowerCase().includes(q)) ||
+    (m.phone && m.phone.includes(q)) ||
+    (m.location && m.location.toLowerCase().includes(q))
+  );
+  document.getElementById('allMembersGrid').innerHTML = filtered.map(m => memberCard(m)).join('');
+}
+
+function renderLookup() {
+  const q = document.getElementById('lookupInput').value.toLowerCase().trim();
+  const container = document.getElementById('lookupResults');
+  if (!q) { container.innerHTML = ''; return; }
+  const filtered = members.filter(m => m.name && m.name.toLowerCase().includes(q));
+  if (filtered.length === 0) {
+    container.innerHTML = `<div class="empty-state">❌ Not a NATTA member (or name spelling differs)</div>`;
+  } else {
+    container.innerHTML = `<div class="grid">${filtered.map(m => memberCard(m)).join('')}</div>`;
+  }
+}
+
+function renderTeams() {
+  const container = document.getElementById('teamsContainer');
+  const teamNames = { yubika: 'Yubika Team', bharat: 'Bharat Team', jiswan: 'Jiswan Team', confused: 'Confused Team', details: 'Add Details Only' };
+  let html = '';
+  for (const [key, name] of Object.entries(teamNames)) {
+    const teamMembers = members.filter(m => teams[key].includes(m.number));
+    html += `
+    <div class="team-section">
+      <div class="team-header">
+        <span style="color:var(--${key === 'details' ? 'details' : key});">${name}</span>
+        <span class="team-count">${teamMembers.length} members</span>
+        <button class="btn btn-sm btn-outline" onclick="downloadTeamCSV('${key}')">⬇️ CSV</button>
+      </div>
+      <div class="grid">${teamMembers.map(m => memberCard(m)).join('')}</div>
+    </div>`;
+  }
+  container.innerHTML = html;
+}
+
+function renderLists() {
+  const container = document.getElementById('listsContainer');
+  let html = '';
+  for (const [name, ids] of Object.entries(customLists)) {
+    const listMembers = members.filter(m => ids.includes(m.number));
+    html += `
+    <div class="list-row">
+      <div class="left">
+        <div>
+          <div class="list-name">${name}</div>
+          <div class="list-count">${listMembers.length} members</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-sm btn-primary" onclick="openListModal('${name}')">👁️ View / Add</button>
+        <button class="btn btn-sm btn-outline" onclick="downloadListCSV('${name}')">⬇️ CSV</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteList('${name}')">🗑️</button>
+      </div>
+    </div>`;
+  }
+  if (!Object.keys(customLists).length) {
+    html = `<div class="empty-state">No custom lists yet. Create one above.</div>`;
+  }
+  container.innerHTML = html;
+}
+
+function openDetails(num) {
+  currentEditId = num;
+  const m = members.find(x => x.number === num);
+  document.getElementById('modalName').value = m.name || '';
+  document.getElementById('modalCompany').value = m.company || '';
+  document.getElementById('modalPhone').value = m.phone || '';
+  document.getElementById('modalNotes').value = notes[num] || '';
+  document.getElementById('modalTeam').value = getTeam(num) || '';
+  document.getElementById('detailsModal').classList.add('active');
+}
+
+function closeModal() {
+  document.getElementById('detailsModal').classList.remove('active');
+  currentEditId = null;
+}
+
+function saveDetails() {
+  if (!currentEditId) return;
+  const team = document.getElementById('modalTeam').value;
+  for (const arr of Object.values(teams)) {
+    const idx = arr.indexOf(currentEditId);
+    if (idx > -1) arr.splice(idx, 1);
+  }
+  if (team) teams[team].push(currentEditId);
+  notes[currentEditId] = document.getElementById('modalNotes').value;
+  saveTeams();
+  closeModal();
+  renderAll();
+  showToast('Saved successfully');
+}
+
+function createList() {
+  const name = document.getElementById('newListName').value.trim();
+  if (!name) return;
+  if (customLists[name]) { showToast('List already exists'); return; }
+  customLists[name] = [];
+  saveTeams();
+  document.getElementById('newListName').value = '';
+  renderLists();
+  showToast('List created');
+}
+
+function deleteList(name) {
+  if (!confirm(`Delete list "${name}"?`)) return;
+  delete customLists[name];
+  saveTeams();
+  renderLists();
+}
+
+function openListModal(name) {
+  currentListName = name;
+  document.getElementById('listModalTitle').textContent = '📁 ' + name;
+  document.getElementById('listModal').classList.add('active');
+  renderListModalSearch();
+}
+
+function closeListModal() {
+  document.getElementById('listModal').classList.remove('active');
+  currentListName = null;
+}
+
+function renderListModalSearch() {
+  const q = document.getElementById('listMemberSearch').value.toLowerCase();
+  const listIds = customLists[currentListName] || [];
+  const inList = members.filter(m => listIds.includes(m.number));
+  const notInList = members.filter(m => !listIds.includes(m.number) && (
+    !q || (m.name && m.name.toLowerCase().includes(q)) || (m.company && m.company.toLowerCase().includes(q))
+  ));
+  let html = '<h4>In this list:</h4><div class="grid">';
+  if (inList.length === 0) html += '<div class="empty-state" style="padding:20px;">Empty list</div>';
+  else html += inList.map(m => memberCard(m, { removeFromList: true, listName: currentListName, hideActions: true })).join('');
+  html += '</div>';
+  if (q) {
+    html += '<h4 style="margin-top:20px;">Add members:</h4><div class="grid">';
+    html += notInList.slice(0, 20).map(m => memberCard(m, { addToList: true, listName: currentListName, hideActions: true })).join('');
+    html += '</div>';
+  }
+  document.getElementById('listModalResults').innerHTML = html;
+}
+
+function addToList(listName, num) {
+  if (!customLists[listName].includes(num)) {
+    customLists[listName].push(num);
+    saveTeams();
+    renderListModalSearch();
+    renderLists();
+  }
+}
+
+function removeFromList(listName, num) {
+  customLists[listName] = customLists[listName].filter(id => id !== num);
+  saveTeams();
+  renderListModalSearch();
+  renderLists();
+}
+
+function downloadJSON() {
+  const data = { teams, notes, customLists, exportedAt: new Date().toISOString() };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = 'natta-backup.json'; a.click();
+  showToast('Backup downloaded');
+}
+
+function printTeams() {
+  const teamNames = { yubika: 'Yubika Team', bharat: 'Bharat Team', jiswan: 'Jiswan Team', confused: 'Confused Team', details: 'Add Details Only' };
+  let html = '<h1>NATTA Team Report</h1><p>Generated: ' + new Date().toLocaleString() + '</p>';
+  for (const [key, name] of Object.entries(teamNames)) {
+    const teamMembers = members.filter(m => teams[key].includes(m.number));
+    if (!teamMembers.length) continue;
+    html += `<h2>${name}</h2><table border="1" cellpadding="6" cellspacing="0" style="border-collapse:collapse;width:100%;font-family:sans-serif;font-size:0.9rem;"><thead style="background:#f0f0f0;"><tr><th>#</th><th>Name</th><th>Company</th><th>Phone</th><th>Location</th><th>Notes</th></tr></thead><tbody>`;
+    for (const m of teamMembers) {
+      html += `<tr><td>${m.number}</td><td>${m.name||''}</td><td>${m.company||''}</td><td>${m.phone||''}</td><td>${m.location||''}</td><td>${notes[m.number]||''}</td></tr>`;
+    }
+    html += '</tbody></table><br>';
+  }
+  document.getElementById('printArea').innerHTML = html;
+  document.getElementById('printArea').classList.add('active');
+  window.print();
+  setTimeout(() => document.getElementById('printArea').classList.remove('active'), 1000);
+}
+
+function objToCSV(arr) {
+  if (!arr.length) return '';
+  const headers = Object.keys(arr[0]);
+  const rows = arr.map(obj => headers.map(h => `"${(obj[h]||'').toString().replace(/"/g,'""')}"`).join(','));
+  return [headers.join(','), ...rows].join('\n');
+}
+
+function downloadMembersCSV() {
+  const csv = objToCSV(members);
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'natta-all-members.csv'; a.click();
+}
+
+function downloadTeamCSV(key) {
+  const teamMembers = members.filter(m => teams[key].includes(m.number));
+  const csv = objToCSV(teamMembers);
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `natta-team-${key}.csv`; a.click();
+}
+
+function downloadListCSV(name) {
+  const listMembers = members.filter(m => customLists[name].includes(m.number));
+  const csv = objToCSV(listMembers);
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `natta-list-${name}.csv`; a.click();
+}
+
+function shareURL() {
+  const state = btoa(JSON.stringify({teams, notes, customLists}));
+  const url = location.href.split('#')[0] + '#' + state;
+  navigator.clipboard.writeText(url).then(() => showToast('Shareable link copied!'));
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+init();
+</script>
+</body>
+</html>
